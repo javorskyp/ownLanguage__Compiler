@@ -20,7 +20,7 @@ expr2: INT                  #int
      | RBO expr0 RBC        #par
      | READ_INT             #readInt
      | READ_REAL            #readReal
-     | ID                   #readId;
+     | ID                   #idRef;
 
 
 READ_INT: 'readInt()';
