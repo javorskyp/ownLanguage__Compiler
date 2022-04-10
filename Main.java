@@ -5,17 +5,17 @@ public class Main {
     public static void main(String[] args) throws Exception {
         ANTLRFileStream input = new ANTLRFileStream(args[0]);
 
-        PLwypiszLexer lexer = new PLwypiszLexer(input);
+        BaseLanLexer lexer = new BaseLanLexer(input);
 
         CommonTokenStream tokens = new CommonTokenStream(lexer);
-        PLwypiszParser parser = new PLwypiszParser(tokens);
+        BaseLanParser parser = new BaseLanParser(tokens);
 
         ParseTree tree = parser.prog(); 
 
-//        System.out.println(tree.toStringTree(parser));
+        System.out.println(tree.toStringTree(parser));
 
-        ParseTreeWalker walker = new ParseTreeWalker();
-        walker.walk(new LLVMActions(), tree);
+        // ParseTreeWalker walker = new ParseTreeWalker();
+        // walker.walk(new LLVMActions(), tree);
 
     }
 }
