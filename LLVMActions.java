@@ -17,6 +17,8 @@ public class LLVMActions extends BaseLanBaseListener {
 	@Override public void exitExpr1(BaseLanParser.Expr1Context ctx) { }
     @Override public void exitExpr2(BaseLanParser.Expr2Context ctx) { }
 	@Override public void exitInnerComponent(BaseLanParser.InnerComponentContext ctx) { }
+    @Override public void exitCastToReal(BaseLanParser.CastToRealContext ctx) { }
+    @Override public void exitCastToInt(BaseLanParser.CastToIntContext ctx) { }
 
     // Pawel
     @Override public void exitMultiply(BaseLanParser.MultiplyContext ctx) { }

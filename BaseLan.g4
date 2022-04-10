@@ -18,11 +18,14 @@ divide: expr2 DIV expr2;
 
 expr2: INT 
      | REAL 
-     | TOINT expr2 
-     | TOREAL expr2 
+     | castToInt 
+     | castToReal 
      | innerComponent 
      | read
      | ID;
+
+castToInt: TOINT expr2;
+castToReal: TOREAL expr2;
 
 innerComponent: RBO expr0 RBC;
 
@@ -32,8 +35,11 @@ subtract: expr1 SUB expr1;
 
 read: READ_INT | READ_REAL;
 
-
-
+READ_INT: 'readInt()';
+READ_REAL: 'readReal()';
+PRINT: 'print';
+TOINT: '(int)';
+TOREAL: '(real)';
 
 ADD: '+';
 SUB: '-';
@@ -42,12 +48,7 @@ DIV: '/';
 EQ: '=';
 RBO: '(';
 RBC: ')'; 
-READ_INT: 'readInt()';
-READ_REAL: 'readReal()';
 NEWLINE: '\r'? '\n';
-TOINT: '(int)';
-TOREAL: '(real)';
-PRINT: 'print';
 WS: (' '|'\t')+ { skip(); };
 INT: [0-9]+;
 REAL: [0-9]+ '.' [0-9]+;

@@ -1,5 +1,5 @@
 x = 6
 # wow
-y = 5.23 # comment
-sum = x+(y*readInt())
+y = (int)5.23 # comment
+sum = (int)x+(y*readInt())
 print(sum)
