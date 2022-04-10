@@ -4,3 +4,6 @@
 *.ll
 *s
 *tokens
+BaseLan*.java
+*.interp
+*.tokens
