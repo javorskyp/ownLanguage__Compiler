@@ -1,37 +1,28 @@
 
-// import java.util.HashMap;
+import java.util.HashMap;
 
-// public class LLVMActions extends PLwypiszBaseListener {
+public class LLVMActions extends BaseLanBaseListener {
 
-//     HashMap<String, String> memory = new HashMap<String, String>();
-//     String value;
+    HashMap<String, String> memory = new HashMap<String, String>();
+    String value;
 
-//     @Override
-//     public void exitAssign(PLwypiszParser.AssignContext ctx) { 
-//        String tmp = ctx.STRING().getText(); 
-//        tmp = tmp.substring(1, tmp.length()-1);
-//        memory.put(ctx.ID().getText(), tmp);    
-//     }
+    // COPYPASTE
+    @Override public void exitProg(BaseLanParser.ProgContext ctx) { }
+	@Override public void exitEveryRule(ParserRuleContext ctx) { }
 
-//     @Override 
-//     public void exitProg(PLwypiszParser.ProgContext ctx) { 
-//        System.out.println( LLVMGenerator.generate() );
-//     }
+    // Mikolaj
+    @Override public void exitInstruction(BaseLanParser.InstructionContext ctx) { }
+	@Override public void exitAssign(BaseLanParser.AssignContext ctx) { }
+	@Override public void exitExpr0(BaseLanParser.Expr0Context ctx) { }
+	@Override public void exitExpr1(BaseLanParser.Expr1Context ctx) { }
+    @Override public void exitExpr2(BaseLanParser.Expr2Context ctx) { }
+	@Override public void exitInnerComponent(BaseLanParser.InnerComponentContext ctx) { }
 
-//     @Override 
-//     public void exitValue(PLwypiszParser.ValueContext ctx) {
-//        if( ctx.ID() != null ){
-//           value = memory.get(ctx.ID().getText());
-//        } 
-//        if( ctx.STRING() != null ){
-//           String tmp = ctx.STRING().getText(); 
-//           value = tmp.substring(1, tmp.length()-1);
-//        } 
-//     }
-
-//     @Override
-//     public void exitPrint(PLwypiszParser.PrintContext ctx) { 
-//        LLVMGenerator.print(value);
-//     } 
-
-// }
+    // Pawel
+    @Override public void exitMultiply(BaseLanParser.MultiplyContext ctx) { }
+	@Override public void exitDivide(BaseLanParser.DivideContext ctx) { }
+	@Override public void exitSum(BaseLanParser.SumContext ctx) { }
+	@Override public void exitSubtract(BaseLanParser.SubtractContext ctx) { }
+	@Override public void exitRead(BaseLanParser.ReadContext ctx) { }
+    @Override public void exitPrint(BaseLanParser.PrintContext ctx) { }
+}
