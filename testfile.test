@@ -1,6 +1,6 @@
 x = (real)2
 y = 3.2
-z = readInt()
+z = readInt() * 3 + 7
 sume = x + y
 print(sume)
 print(z)

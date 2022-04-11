@@ -19,14 +19,26 @@ class LLVMGenerator{
       return newId;
    }
 
-   static void scanfInt(String id){
-      main_text += "%"+reg+" = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpi, i32 0, i32 0), i32* %"+id+")\n";
+   static String scanfInt(){
+      main_text += "%"+reg+" = alloca i32\n";
       reg++;
+      main_text += "%"+reg+" = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpi, i32 0, i32 0), i32* %"+(reg-1)+")\n";
+      reg++;
+      main_text += "%"+reg+" = load i32, i32* %"+(reg-2)+"\n";
+      String newId = "%"+reg;
+      reg++;
+      return newId;
    }
 
-   static void scanfReal(String id){
-      main_text += "%"+reg+" = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpd, i32 0, i32 0), double* %"+id+")\n";
+   static String scanfReal(){
+      main_text += "%"+reg+" = alloca double\n";
       reg++;
+      main_text += "%"+reg+" = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpd, i32 0, i32 0), double* %"+(reg-1)+")\n";
+      reg++;
+      main_text += "%"+reg+" = load double, double* %"+(reg-2)+"\n";
+      String newId = "%"+reg;
+      reg++;
+      return newId;
    }
 
    static void printInt(String id){

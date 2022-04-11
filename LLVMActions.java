@@ -37,29 +37,13 @@ public class LLVMActions extends BaseLanBaseListener {
     }
 
     @Override public void exitReadInt(BaseLanParser.ReadIntContext ctx) {
-        String ID = ctx.ID().getText();
-        VarType type = variables.get(ID);
-        if(type == null) {
-            variables.put(ID, VarType.INT);
-            LLVMGenerator.declare_i32(ID);
-        }
-        else if(type != VarType.INT) {
-            error(ctx.getStart().getLine(), "variable of type: "+type+", expected REAL");
-        }
-        LLVMGenerator.scanfInt(ID);
+        String ID = LLVMGenerator.scanfInt();
+        stack.push(new Value(ID, VarType.INT));
     }
 
     @Override public void exitReadReal(BaseLanParser.ReadRealContext ctx) {
-        String ID = ctx.ID().getText();
-        VarType type = variables.get(ID);
-        if(type == null) {
-            variables.put(ID, VarType.REAL);
-            LLVMGenerator.declare_double(ID);
-        }
-        else if(type != VarType.REAL) {
-            error(ctx.getStart().getLine(), "variable of type: "+type+", expected REAL");
-        }
-        LLVMGenerator.scanfReal(ID);
+        String ID = LLVMGenerator.scanfReal();
+        stack.push(new Value(ID, VarType.REAL));
     }
 
     @Override public void exitIdRef(BaseLanParser.IdRefContext ctx) {
@@ -101,7 +85,7 @@ public class LLVMActions extends BaseLanBaseListener {
     }
 
     // Pawel
-    @Override public void exitMultiply(BaseLanParser.MultiplyContext ctx) { 
+    @Override public void exitMultiply(BaseLanParser.MultiplyContext ctx) {
         Value val1 = stack.pop();
         Value val2 = stack.pop();
         if( val1.type == val2.type ) {
@@ -149,7 +133,7 @@ public class LLVMActions extends BaseLanBaseListener {
             error(ctx.getStart().getLine(), "incorrect sum type, val1 type: "+val1.type+" val2 type: "+val2.type);
         }
      }
-	@Override public void exitSubtract(BaseLanParser.SubtractContext ctx) { 
+	@Override public void exitSubtract(BaseLanParser.SubtractContext ctx) {
         Value val1 = stack.pop();
         Value val2 = stack.pop();
         if( val1.type == val2.type ) {
