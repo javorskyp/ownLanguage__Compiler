@@ -17,7 +17,7 @@ expr1: expr2                #single1
 
 expr2: INT                  #int
      | REAL                 #real
-     | TOINT expr2          #toInt
+     | TOINT  expr2         #toInt
      | TOREAL expr2         #toReal
      | RBO expr0 RBC        #par
      | ID                   #idRef;

@@ -1,5 +1,6 @@
-x = 6
-# wow
-y = (int)5.23 # comment
-sum = (int)x+(y*readInt())
-print(sum)
+x = (real)2
+y = 3.2
+z = readInt()
+sume = x + y
+print(sume)
+print(z)

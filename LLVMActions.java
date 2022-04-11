@@ -23,8 +23,8 @@ public class LLVMActions extends BaseLanBaseListener {
 
     // Mikolaj
     @Override public void exitAssign(BaseLanParser.AssignContext ctx) {
-        var ID = ctx.ID().getText();
-        var v = stack.pop();
+        String ID = ctx.ID().getText();
+        Value v = stack.pop();
         variables.put(ID, v.type);
         if(v.type == VarType.INT) {
             LLVMGenerator.declare_i32(ID);
@@ -37,8 +37,8 @@ public class LLVMActions extends BaseLanBaseListener {
     }
 
     @Override public void exitReadInt(BaseLanParser.ReadIntContext ctx) {
-        var ID = ctx.ID().getText();
-        var type = variables.get(ID);
+        String ID = ctx.ID().getText();
+        VarType type = variables.get(ID);
         if(type == null) {
             variables.put(ID, VarType.INT);
             LLVMGenerator.declare_i32(ID);
@@ -50,8 +50,8 @@ public class LLVMActions extends BaseLanBaseListener {
     }
 
     @Override public void exitReadReal(BaseLanParser.ReadRealContext ctx) {
-        var ID = ctx.ID().getText();
-        var type = variables.get(ID);
+        String ID = ctx.ID().getText();
+        VarType type = variables.get(ID);
         if(type == null) {
             variables.put(ID, VarType.REAL);
             LLVMGenerator.declare_double(ID);
@@ -63,24 +63,31 @@ public class LLVMActions extends BaseLanBaseListener {
     }
 
     @Override public void exitIdRef(BaseLanParser.IdRefContext ctx) {
-        var ID = ctx.ID().getText();
-        var type = variables.get(ID);
-        if( type != null ) {
+        String ID = ctx.ID().getText();
+        VarType type = variables.get(ID);
+        if(type == null) {
+            error(ctx.getStart().getLine(), "variable uninitialized");
+        }
+
+        if( type == VarType.REAL ) {
+            ID = LLVMGenerator.loadReal(ID);
             stack.push(new Value(ID, type));
         }
-        else {
-            error(ctx.getStart().getLine(), "variable uninitialized");
+
+        if(type == VarType.INT) {
+            ID = LLVMGenerator.loadInt(ID);
+            stack.push(new Value(ID, type));
         }
     }
 
     @Override public void exitToInt(BaseLanParser.ToIntContext ctx) {
-        var val = stack.pop();
+        Value val = stack.pop();
         LLVMGenerator.fptosi(val.name);
         stack.push(new Value("%"+(LLVMGenerator.reg-1), VarType.INT));
     }
 
     @Override public void exitToReal(BaseLanParser.ToRealContext ctx) {
-        var val = stack.pop();
+        Value val = stack.pop();
         LLVMGenerator.sitofp(val.name);
         stack.push(new Value("%"+(LLVMGenerator.reg-1), VarType.REAL));
     }
@@ -95,8 +102,8 @@ public class LLVMActions extends BaseLanBaseListener {
 
     // Pawel
     @Override public void exitMultiply(BaseLanParser.MultiplyContext ctx) { 
-        var val1 = stack.pop();
-        var val2 = stack.pop();
+        Value val1 = stack.pop();
+        Value val2 = stack.pop();
         if( val1.type == val2.type ) {
             if(val1.type == VarType.INT){
                 LLVMGenerator.multiply_i32(val1.name, val2.name);
@@ -111,8 +118,8 @@ public class LLVMActions extends BaseLanBaseListener {
         }
     }
 	@Override public void exitDivide(BaseLanParser.DivideContext ctx) {
-        var val1 = stack.pop();
-        var val2 = stack.pop();
+        Value val1 = stack.pop();
+        Value val2 = stack.pop();
         if( val1.type == val2.type ) {
             if(val1.type == VarType.INT){
                 LLVMGenerator.divide_i32(val1.name, val2.name);
@@ -127,8 +134,8 @@ public class LLVMActions extends BaseLanBaseListener {
         }
     }
     @Override public void exitSum(BaseLanParser.SumContext ctx) {
-        var val1 = stack.pop();
-        var val2 = stack.pop();
+        Value val1 = stack.pop();
+        Value val2 = stack.pop();
         if( val1.type == val2.type ) {
             if( val1.type == VarType.INT ){
                 LLVMGenerator.sum_i32(val1.name, val2.name);
@@ -139,12 +146,12 @@ public class LLVMActions extends BaseLanBaseListener {
                 stack.push( new Value("%"+(LLVMGenerator.reg-1), VarType.REAL) );
             }
         } else {
-            error(ctx.getStart().getLine(), "incorrect sume type");
+            error(ctx.getStart().getLine(), "incorrect sum type, val1 type: "+val1.type+" val2 type: "+val2.type);
         }
      }
 	@Override public void exitSubtract(BaseLanParser.SubtractContext ctx) { 
-        var val1 = stack.pop();
-        var val2 = stack.pop();
+        Value val1 = stack.pop();
+        Value val2 = stack.pop();
         if( val1.type == val2.type ) {
             if(val1.type == VarType.INT){
                 LLVMGenerator.subtract_i32(val1.name, val2.name);
@@ -159,7 +166,16 @@ public class LLVMActions extends BaseLanBaseListener {
         }
     }
     @Override public void exitSingle1(BaseLanParser.Single1Context ctx) { }
-    @Override public void exitPrint(BaseLanParser.PrintContext ctx) { }
+    @Override public void exitPrint(BaseLanParser.PrintContext ctx) {
+        String ID = ctx.ID().getText();
+        VarType type = variables.get(ID);
+        if(type == VarType.INT) {
+            LLVMGenerator.printInt(ID);
+        }
+        if(type == VarType.REAL) {
+            LLVMGenerator.printDouble(ID);
+        }
+    }
     @Override public void exitSingle0(BaseLanParser.Single0Context ctx) { }
 
     void error(int line, String msg){

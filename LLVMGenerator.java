@@ -5,23 +5,44 @@ class LLVMGenerator{
    static String main_text = "";
    static int reg = 1;
 
+   static String loadReal(String id) {
+      main_text += "%"+reg+" = load double, double* %"+id+"\n";
+      String newId = "%"+reg;
+      reg++;
+      return newId;
+   }
+
+   static String loadInt(String id) {
+      main_text += "%"+reg+" = load i32, i32* %"+id+"\n";
+      String newId = "%"+reg;
+      reg++;
+      return newId;
+   }
+
    static void scanfInt(String id){
-      main_text += "%"+reg+" = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @strpd, i32 0, i32 0), i32* %"+id+")\n";
+      main_text += "%"+reg+" = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpi, i32 0, i32 0), i32* %"+id+")\n";
       reg++;
    }
 
    static void scanfReal(String id){
-      main_text += "%"+reg+" = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @strpd, i32 0, i32 0), double* %"+id+")\n";
+      main_text += "%"+reg+" = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpd, i32 0, i32 0), double* %"+id+")\n";
       reg++;
    }
 
-   static void print(String text){
-      int str_len = text.length();
-      String str_type = "["+(str_len+2)+" x i8]";  
-      header_text += "@str"+reg+" = constant"+str_type+" c\""+text+"\\0A\\00\"\n";
-      main_text += "call i32 (i8*, ...) @printf(i8* getelementptr inbounds ( "+str_type+", "+str_type+"* @str"+reg+", i32 0, i32 0))\n";
+   static void printInt(String id){
+      main_text += "%"+reg+" = load i32, i32* %"+id+"\n";
+      reg++;
+      main_text += "%"+reg+" = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpi, i32 0, i32 0), i32 %"+(reg-1)+")\n";
       reg++;
    }
+
+   static void printDouble(String id){
+      main_text += "%"+reg+" = load double, double* %"+id+"\n";
+      reg++;
+      main_text += "%"+reg+" = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpd, i32 0, i32 0), double %"+(reg-1)+")\n";
+      reg++;
+   }
+
 
    static String generate(){
       String text;
@@ -53,42 +74,42 @@ class LLVMGenerator{
    }
 
    static void sum_i32(String value1, String value2){
-      main_text += "%"+reg+" = sum i32 "+value1+", "+value2+"\n";
+      main_text += "%"+reg+" = add i32 "+value1+", "+value2+"\n";
       reg++;
    }
 
    static void sum_double(String value1, String value2){
-      main_text += "%"+reg+" = fsum double "+value1+", "+value2+"\n";
+      main_text += "%"+reg+" = fadd double "+value1+", "+value2+"\n";
       reg++;
    }
 
    static void subtract_i32(String val1, String val2){
-      main_text += "%"+reg+" = subtract i32 "+val2+", "+val1+"\n";
+      main_text += "%"+reg+" = sub i32 "+val2+", "+val1+"\n";
       reg++;
    }
 
    static void subtract_double(String val1, String val2){
-      main_text += "%"+reg+" = fsubtract double "+val2+", "+val1+"\n";
+      main_text += "%"+reg+" = fsub double "+val2+", "+val1+"\n";
       reg++;
    }
 
    static void multiply_i32(String value1, String value2){
-      main_text += "%"+reg+" = multiply i32 "+value1+", "+value2+"\n";
+      main_text += "%"+reg+" = mul i32 "+value1+", "+value2+"\n";
       reg++;
    }
 
-  static void multiply_double(String value1, String value2){
-      main_text += "%"+reg+" = fmultiply double "+value1+", "+value2+"\n";
+   static void multiply_double(String value1, String value2){
+      main_text += "%"+reg+" = fmul double "+value1+", "+value2+"\n";
       reg++;
    }
 
    static void divide_i32(String val1, String val2){
-      main_text += "%"+reg+" = sdivide i32 "+val2+", "+val1+"\n";
+      main_text += "%"+reg+" = sdiv i32 "+val2+", "+val1+"\n";
       reg++;
    }
 
    static void divide_double(String val1, String val2){
-      main_text += "%"+reg+" = fdivide double "+val2+", "+val1+"\n";
+      main_text += "%"+reg+" = fdiv double "+val2+", "+val1+"\n";
       reg++;
    }
 
@@ -101,5 +122,4 @@ class LLVMGenerator{
       main_text += "%"+reg+" = fptosi double "+id+" to i32\n";
       reg++;
    }
-
 }
