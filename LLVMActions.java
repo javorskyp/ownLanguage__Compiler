@@ -25,13 +25,24 @@ public class LLVMActions extends BaseLanBaseListener {
     @Override public void exitAssign(BaseLanParser.AssignContext ctx) {
         String ID = ctx.ID().getText();
         Value v = stack.pop();
-        variables.put(ID, v.type);
+        boolean alreadyDefined = false;
+        if(variables.containsKey(ID)) {
+            alreadyDefined = true;
+            if(v.type != variables.get(ID))
+                error(ctx.getStart().getLine(), "can't assign value of type "+v.type+" to variable "+ID+" of type "+variables.get(ID));
+        }
+        else{
+            variables.put(ID, v.type);
+        }
+
         if(v.type == VarType.INT) {
-            LLVMGenerator.declare_i32(ID);
+            if(!alreadyDefined)
+                LLVMGenerator.declare_i32(ID);
             LLVMGenerator.assign_i32(ID, v.name);
         }
         if(v.type == VarType.REAL) {
-            LLVMGenerator.declare_double(ID);
+            if(!alreadyDefined)
+                LLVMGenerator.declare_double(ID);
             LLVMGenerator.assign_double(ID, v.name);
         }
     }
