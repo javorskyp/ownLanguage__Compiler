@@ -3,7 +3,9 @@ grammar BaseLan;
 prog: ( stat? NEWLINE )*;
 
 stat: ID EQ expr0           #assign
-    | PRINT RBO ID RBC      #print;
+    | PRINT RBO ID RBC      #print
+    | ID EQ READ_INT        #readInt
+    | ID EQ READ_REAL       #readReal;
 
 expr0: expr1                #single0
      | expr1 ADD expr1      #sum
@@ -18,8 +20,6 @@ expr2: INT                  #int
      | TOINT expr2          #toInt
      | TOREAL expr2         #toReal
      | RBO expr0 RBC        #par
-     | READ_INT             #readInt
-     | READ_REAL            #readReal
      | ID                   #idRef;
 
 

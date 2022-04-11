@@ -1,10 +1,7 @@
-
-import org.antlr.v4.runtime.ParserRuleContext;
-
 import java.util.HashMap;
 import java.util.Stack;
 
-enum VarType{ INT, REAL, UNKNOWN }
+enum VarType{ INT, REAL }
 
 class Value{
     public String name;
@@ -20,9 +17,9 @@ public class LLVMActions extends BaseLanBaseListener {
     HashMap<String, VarType> variables = new HashMap<>();
     Stack<Value> stack = new Stack<>();
 
-    // COPYPASTE
-    @Override public void exitProg(BaseLanParser.ProgContext ctx) { }
-	@Override public void exitEveryRule(ParserRuleContext ctx) { }
+    @Override public void exitProg(BaseLanParser.ProgContext ctx) {
+        System.out.println(LLVMGenerator.generate());
+    }
 
     // Mikolaj
     @Override public void exitAssign(BaseLanParser.AssignContext ctx) {
@@ -38,13 +35,33 @@ public class LLVMActions extends BaseLanBaseListener {
             LLVMGenerator.assign_double(ID, v.name);
         }
     }
-    @Override public void exitPar(BaseLanParser.ParContext ctx) { }
+
     @Override public void exitReadInt(BaseLanParser.ReadIntContext ctx) {
-        // ??
+        var ID = ctx.ID().getText();
+        var type = variables.get(ID);
+        if(type == null) {
+            variables.put(ID, VarType.INT);
+            LLVMGenerator.declare_i32(ID);
+        }
+        else if(type != VarType.INT) {
+            error(ctx.getStart().getLine(), "variable of type: "+type+", expected REAL");
+        }
+        LLVMGenerator.scanfInt(ID);
     }
+
     @Override public void exitReadReal(BaseLanParser.ReadRealContext ctx) {
-        // ??
+        var ID = ctx.ID().getText();
+        var type = variables.get(ID);
+        if(type == null) {
+            variables.put(ID, VarType.REAL);
+            LLVMGenerator.declare_double(ID);
+        }
+        else if(type != VarType.REAL) {
+            error(ctx.getStart().getLine(), "variable of type: "+type+", expected REAL");
+        }
+        LLVMGenerator.scanfReal(ID);
     }
+
     @Override public void exitIdRef(BaseLanParser.IdRefContext ctx) {
         var ID = ctx.ID().getText();
         var type = variables.get(ID);
@@ -55,19 +72,23 @@ public class LLVMActions extends BaseLanBaseListener {
             error(ctx.getStart().getLine(), "variable uninitialized");
         }
     }
+
     @Override public void exitToInt(BaseLanParser.ToIntContext ctx) {
         var val = stack.pop();
         LLVMGenerator.fptosi(val.name);
         stack.push(new Value("%"+(LLVMGenerator.reg-1), VarType.INT));
     }
+
     @Override public void exitToReal(BaseLanParser.ToRealContext ctx) {
         var val = stack.pop();
         LLVMGenerator.sitofp(val.name);
         stack.push(new Value("%"+(LLVMGenerator.reg-1), VarType.REAL));
     }
+
     @Override public void exitInt(BaseLanParser.IntContext ctx) {
         stack.push(new Value(ctx.INT().getText(), VarType.INT));
     }
+
     @Override public void exitReal(BaseLanParser.RealContext ctx) {
         stack.push(new Value(ctx.REAL().getText(), VarType.REAL));
     }

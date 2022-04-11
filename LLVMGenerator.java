@@ -5,6 +5,16 @@ class LLVMGenerator{
    static String main_text = "";
    static int reg = 1;
 
+   static void scanfInt(String id){
+      main_text += "%"+reg+" = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @strpd, i32 0, i32 0), i32* %"+id+")\n";
+      reg++;
+   }
+
+   static void scanfReal(String id){
+      main_text += "%"+reg+" = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @strpd, i32 0, i32 0), double* %"+id+")\n";
+      reg++;
+   }
+
    static void print(String text){
       int str_len = text.length();
       String str_type = "["+(str_len+2)+" x i8]";  
@@ -16,6 +26,9 @@ class LLVMGenerator{
    static String generate(){
       String text;
       text = "declare i32 @printf(i8*, ...)\n";
+      text += "declare i32 @__isoc99_scanf(i8*, ...)\n";
+      text += "@strpi = constant [4 x i8] c\"%d\\0A\\00\"\n";
+      text += "@strpd = constant [4 x i8] c\"%f\\0A\\00\"\n";
       text += header_text;
       text += "define i32 @main() nounwind{\n";
       text += main_text;
