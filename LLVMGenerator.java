@@ -39,6 +39,26 @@ class LLVMGenerator{
       main_text += "store double "+value+", double* %"+id+"\n";
    }
 
+   static void sum_i32(String value1, String value2){
+      main_text += "%"+reg+" = sum i32 "+value1+", "+value2+"\n";
+      reg++;
+   }
+
+   static void sum_double(String value1, String value2){
+      main_text += "%"+reg+" = fsum double "+value1+", "+value2+"\n";
+      reg++;
+   }
+
+   static void subtract_i32(String val1, String val2){
+      main_text += "%"+reg+" = subtract i32 "+val2+", "+val1+"\n";
+      reg++;
+   }
+
+   static void subtract_double(String val1, String val2){
+      main_text += "%"+reg+" = fsubtract double "+val2+", "+val1+"\n";
+      reg++;
+   }
+
    static void multiply_i32(String value1, String value2){
       main_text += "%"+reg+" = multiply i32 "+value1+", "+value2+"\n";
       reg++;

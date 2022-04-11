@@ -105,8 +105,38 @@ public class LLVMActions extends BaseLanBaseListener {
             error(ctx.getStart().getLine(), "incorrect divide type");
         }
     }
-    @Override public void exitSum(BaseLanParser.SumContext ctx) { }
-	@Override public void exitSubtract(BaseLanParser.SubtractContext ctx) { }
+    @Override public void exitSum(BaseLanParser.SumContext ctx) {
+        var val1 = stack.pop();
+        var val2 = stack.pop();
+        if( val1.type == val2.type ) {
+            if( val1.type == VarType.INT ){
+                LLVMGenerator.sum_i32(val1.name, val2.name);
+                stack.push( new Value("%"+(LLVMGenerator.reg-1), VarType.INT) );
+            }
+            if( val1.type == VarType.REAL ){
+                LLVMGenerator.sum_double(val1.name, val2.name);
+                stack.push( new Value("%"+(LLVMGenerator.reg-1), VarType.REAL) );
+            }
+        } else {
+            error(ctx.getStart().getLine(), "incorrect sume type");
+        }
+     }
+	@Override public void exitSubtract(BaseLanParser.SubtractContext ctx) { 
+        var val1 = stack.pop();
+        var val2 = stack.pop();
+        if( val1.type == val2.type ) {
+            if(val1.type == VarType.INT){
+                LLVMGenerator.subtract_i32(val1.name, val2.name);
+                stack.push( new Value("%"+(LLVMGenerator.reg-1), VarType.INT) );
+            }
+            if(val1.type == VarType.REAL){
+                LLVMGenerator.subtract_double(val1.name, val2.name);
+                stack.push( new Value("%"+(LLVMGenerator.reg-1), VarType.REAL) );
+            }
+        } else {
+            error(ctx.getStart().getLine(), "incorrect subtract type");
+        }
+    }
     @Override public void exitSingle1(BaseLanParser.Single1Context ctx) { }
     @Override public void exitPrint(BaseLanParser.PrintContext ctx) { }
     @Override public void exitSingle0(BaseLanParser.Single0Context ctx) { }
