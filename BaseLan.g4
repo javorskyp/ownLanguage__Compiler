@@ -3,8 +3,8 @@ grammar BaseLan;
 prog: ( stat? NEWLINE )*;
 
 stat: ID EQ expr0                       #assign
-    | ID EQ CBO (REAL)* CBC             #declareRealArray
-    | ID EQ CBO (INT)* CBC              #declareIntArray
+    | ID EQ CBO REAL? (CM REAL)* CBC    #declareRealArray
+    | ID EQ CBO INT? (CM INT)* CBC      #declareIntArray
     | ID SBO INT SBC EQ expr0           #assignArrayEl
     | PRINT RBO expr0 RBC               #print;
 
@@ -46,6 +46,7 @@ SBC: ']';
 CBO: '{';
 CBC: '}';
 NEWLINE: '\r'? '\n';
+CM: ',';
 WS: (' '|'\t')+ { skip(); };
 INT: [0-9]+;
 REAL: [0-9]+ '.' [0-9]+;
