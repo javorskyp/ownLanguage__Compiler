@@ -295,7 +295,26 @@ public class LLVMActions extends BaseLanBaseListener {
             LLVMGenerator.printDouble(val.name);
         }
         if(val.type == VarType.STRING) {
-            LLVMGenerator.printString(val.name, complexVarSize.get(val.name));
+            int size = 0;
+            String ID = val.name;
+            if(!variables.containsKey(val.name)){
+                String value = val.name;
+                char[] charValue = value.substring(1, value.length()-1).toCharArray();
+                ID = String.valueOf(LLVMGenerator.reg);
+                LLVMGenerator.reg++;
+                LLVMGenerator.declare_string(ID, charValue.length);
+                int index = 0;
+                for(char i : charValue) {
+                    LLVMGenerator.assign_string_char(ID, i, charValue.length, index);
+                    ++index;
+                }
+                LLVMGenerator.assign_string_char(ID, '\0', charValue.length, index);
+                size = charValue.length;
+            }
+            else{
+                size = complexVarSize.get(val.name);
+            }
+            LLVMGenerator.printString(ID, size);
         }
     }
     @Override public void exitSingle0(BaseLanParser.Single0Context ctx) { }
