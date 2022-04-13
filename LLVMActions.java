@@ -1,4 +1,3 @@
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.HashMap;
@@ -11,9 +10,14 @@ enum VarType{ INT, REAL, INT_ARRAY, REAL_ARRAY, STRING }
 class Value{
     public String name;
     public VarType type;
-    public Value( String name, VarType type ){
+    public int size = 0;
+    public Value( String name, VarType type, int size){
         this.name = name;
         this.type = type;
+        this.size = size;
+    }
+    public Value( String name, VarType type ){
+        this(name, type, 0);
     }
 }
 
@@ -114,7 +118,7 @@ public class LLVMActions extends BaseLanBaseListener {
         complexVarSize.put(ID, length);
     }
 
-    @Override public void exitAssignIntArrayEl(BaseLanParser.AssignIntArrayElContext ctx) {
+    @Override public void exitAssignArrayEl(BaseLanParser.AssignArrayElContext ctx) {
         String ID = ctx.ID().getText();
         String index = ctx.INT().getText();
 
@@ -123,32 +127,19 @@ public class LLVMActions extends BaseLanBaseListener {
         }
 
         VarType type = variables.get(ID);
-        if(type != VarType.INT_ARRAY){
-            error(ctx.getStart().getLine(), "array of type REAL does not accept INT values");
-        }
         Value val = stack.pop();
         int length = complexVarSize.get(ID);
-        LLVMGenerator.assign_arr_el_i32(ID, val.name, index, length);
-    }
-
-    @Override public void exitAssignRealArrayEl(BaseLanParser.AssignRealArrayElContext ctx) {
-        String ID = ctx.ID().getText();
-        String index = ctx.INT().getText();
-
-        if(!variables.containsKey(ID)) {
-            error(ctx.getStart().getLine(), "array does not exist");
+        if(!doesValueTypeMatchArrayType(val.type, type)) {
+            error(ctx.getStart().getLine(), "array of type "+type+"does not accept values of type "+val.type);
         }
 
-        VarType type = variables.get(ID);
-        if(type != VarType.REAL_ARRAY){
-            error(ctx.getStart().getLine(), "array of type INT does not accept REAL values");
+        if(type == VarType.REAL_ARRAY) {
+            LLVMGenerator.assign_arr_el_double(ID, val.name, index, length);
         }
-
-        Value val = stack.pop();
-        int length = complexVarSize.get(ID);
-        LLVMGenerator.assign_arr_el_double(ID, val.name, index, length);
+        if(type == VarType.INT_ARRAY) {
+            LLVMGenerator.assign_arr_el_i32(ID, val.name, index, length);
+        }
     }
-
 
     @Override public void exitReadInt(BaseLanParser.ReadIntContext ctx) {
         String ID = LLVMGenerator.scanfInt();
@@ -312,5 +303,10 @@ public class LLVMActions extends BaseLanBaseListener {
     void error(int line, String msg){
         System.err.println("Error, line "+line+", "+msg);
         System.exit(1);
+    }
+
+    boolean doesValueTypeMatchArrayType(VarType valType, VarType arrType) {
+        return (valType == VarType.INT && arrType == VarType.INT_ARRAY)
+                || (valType == VarType.REAL && arrType == VarType.REAL_ARRAY);
     }
 }

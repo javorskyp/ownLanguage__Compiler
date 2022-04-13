@@ -3,16 +3,26 @@ print(x)
 y = {1 2 3}
 print(y[1])
 y[0] = 4
-y[1] = 5
+y[1] = readInt()
 y[2] = 6
 z = y[1] + 3
 print(z)
 print(y[0])
 print(y[1])
 print(y[2])
-sa = "wow what the hell321321"
+sa = "wow"
 print(sa)
 
-arr = {1 2 3 4}
+arr = {1.0 2.3 3.4 4.1}
+print(arr[0])
 print(arr[1])
-
+print(arr[2])
+print(arr[3])
+arr[1] = readReal()
+arr[1] = readReal()
+arr[1] = readReal()
+arr[2] = 11.11
+print(arr[0])
+print(arr[1])
+print(arr[2])
+print(arr[3])

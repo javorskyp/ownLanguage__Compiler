@@ -5,8 +5,7 @@ prog: ( stat? NEWLINE )*;
 stat: ID EQ expr0                       #assign
     | ID EQ CBO (REAL)* CBC             #declareRealArray
     | ID EQ CBO (INT)* CBC              #declareIntArray
-    | ID SBO INT SBC EQ expr0           #assignIntArrayEl
-    | ID SBO INT SBC EQ expr0           #assignRealArrayEl
+    | ID SBO INT SBC EQ expr0           #assignArrayEl
     | PRINT RBO expr0 RBC               #print;
 
 expr0: expr1                            #single0

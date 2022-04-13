@@ -7,9 +7,9 @@ class LLVMGenerator{
    static String generate(){
       String text;
       text = "declare i32 @printf(i8*, ...)\n";
-      text += "declare i32 @__isoc99_scanf(i8*, ...)\n";
+      text += "declare i32 @scanf(i8*, ...)\n";
       text += "@strpi = constant [4 x i8] c\"%d\\0A\\00\"\n";
-      text += "@strpd = constant [4 x i8] c\"%f\\0A\\00\"\n";
+      text += "@strpd = constant [5 x i8] c\"%lf\\0A\\00\"\n";
       text += "@strps = private unnamed_addr constant [4 x i8] c\"%s\\0A\\00\"\n";
       text += header_text;
       text += "define i32 @main() nounwind{\n";
@@ -42,8 +42,8 @@ class LLVMGenerator{
       main_text += "store i32 "+val+", i32* %"+(reg-1)+", align 16\n";
    }
 
-   static void assign_arr_el_double(String id, String val, String index, int length){
-      main_text += "%"+reg+" = insertelement["+length+" x double]* %"+id+", double "+val+", i32 "+index+"\n";
+   static void assign_arr_el_double(String id, String val, String index, int size){
+      main_text += "%"+reg+" = getelementptr inbounds [" + size + " x double], [" + size + " x double]* %" + id + ", i64 0, i64 " + index + "\n";
       ++reg;
       main_text += "store double "+val+", double* %"+(reg-1)+", align 16\n";
    }
@@ -80,7 +80,7 @@ class LLVMGenerator{
    static String scanfInt(){
       main_text += "%"+reg+" = alloca i32\n";
       reg++;
-      main_text += "%"+reg+" = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpi, i32 0, i32 0), i32* %"+(reg-1)+")\n";
+      main_text += "%"+reg+" = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpi, i32 0, i32 0), i32* %"+(reg-1)+")\n";
       reg++;
       main_text += "%"+reg+" = load i32, i32* %"+(reg-2)+"\n";
       String newId = "%"+reg;
@@ -91,7 +91,7 @@ class LLVMGenerator{
    static String scanfReal(){
       main_text += "%"+reg+" = alloca double\n";
       reg++;
-      main_text += "%"+reg+" = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpd, i32 0, i32 0), double* %"+(reg-1)+")\n";
+      main_text += "%"+reg+" = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @strpd, i32 0, i32 0), double* %"+(reg-1)+")\n";
       reg++;
       main_text += "%"+reg+" = load double, double* %"+(reg-2)+"\n";
       String newId = "%"+reg;
@@ -109,7 +109,7 @@ class LLVMGenerator{
    static void printDouble(String id){
 //      main_text += "%"+reg+" = load double, double* %"+id+"\n";
 //      reg++;
-      main_text += "%"+reg+" = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpd, i32 0, i32 0), double "+(id)+")\n";
+      main_text += "%"+reg+" = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @strpd, i32 0, i32 0), double "+(id)+")\n";
       reg++;
    }
 
