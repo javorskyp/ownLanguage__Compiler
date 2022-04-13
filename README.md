@@ -34,11 +34,10 @@ $ java -cp ../antlr-4.4.2-complete.jar :. Home example.PL> example.ll
 Of course, all stages.
 
 WSL Makefile
- 
-   install  : sudo apt install make
-   generate : make generate
-   compile  : make compile
-   test     : make test
-   clean    : make clean
+1. install  : sudo apt install make
+2. generate : make generate
+3. compile  : make compile
+4. test     : make test
+5. clean    : make clean
 
 Be sure to have the appropriate antlr file path and the name according to the Makefile
