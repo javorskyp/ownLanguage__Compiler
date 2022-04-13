@@ -10,8 +10,8 @@ expr0: expr1                #single0
      | expr1 SUB expr1      #subtract;
 
 expr1: expr2                #single1
-     | expr2 MULT expr2     #multiply
-     | expr2 DIV expr2      #divide;
+     | expr2 MULT expr1     #multiply
+     | expr2 DIV expr1      #divide;
 
 expr2: INT                  #int
      | REAL                 #real
