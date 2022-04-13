@@ -1,7 +1,10 @@
+import org.antlr.v4.runtime.tree.TerminalNode;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Stack;
 
-enum VarType{ INT, REAL }
+enum VarType{ INT, REAL, INT_ARRAY, REAL_ARRAY, STRING }
 
 class Value{
     public String name;
@@ -15,6 +18,7 @@ class Value{
 public class LLVMActions extends BaseLanBaseListener {
 
     HashMap<String, VarType> variables = new HashMap<>();
+    HashMap<String, Integer> arrayLengths = new HashMap<>();
     Stack<Value> stack = new Stack<>();
 
     @Override public void exitProg(BaseLanParser.ProgContext ctx) {
@@ -47,6 +51,68 @@ public class LLVMActions extends BaseLanBaseListener {
         }
     }
 
+    @Override public void exitAssignString(BaseLanParser.AssignStringContext ctx) {
+
+    }
+
+    @Override public void exitDeclareRealArray(BaseLanParser.DeclareRealArrayContext ctx) {
+        String ID = ctx.ID().getText();
+        if(variables.containsKey(ID)) {
+            error(ctx.getStart().getLine(), "cant re-declare an array");
+        }
+        int length = Integer.parseInt(ctx.INT().getText());
+        LLVMGenerator.declare_double_array(ID, length);
+        variables.put(ID, VarType.REAL_ARRAY);
+        arrayLengths.put(ID, length);
+    }
+
+    @Override public void exitDeclareIntArray(BaseLanParser.DeclareIntArrayContext ctx) {
+        String ID = ctx.ID().getText();
+        if(variables.containsKey(ID)) {
+            error(ctx.getStart().getLine(), "cant re-declare an array");
+        }
+        int length = Integer.parseInt(ctx.INT().getText());
+        LLVMGenerator.declare_int32_array(ID, length);
+        variables.put(ID, VarType.INT_ARRAY);
+        arrayLengths.put(ID, length);
+    }
+
+    @Override public void exitAssignIntArrayEl(BaseLanParser.AssignIntArrayElContext ctx) {
+        String ID = ctx.ID().getText();
+        String index = ctx.INT().getText();
+
+        if(!variables.containsKey(ID)) {
+            error(ctx.getStart().getLine(), "array does not exist");
+        }
+
+        VarType type = variables.get(ID);
+        if(type != VarType.INT_ARRAY){
+            error(ctx.getStart().getLine(), "array of type REAL does not accept INT values");
+        }
+        Value val = stack.pop();
+        int length = arrayLengths.get(ID);
+        LLVMGenerator.assign_arr_el_i32(ID, val.name, index, length);
+    }
+
+    @Override public void exitAssignRealArrayEl(BaseLanParser.AssignRealArrayElContext ctx) {
+        String ID = ctx.ID().getText();
+        String index = ctx.INT().getText();
+
+        if(!variables.containsKey(ID)) {
+            error(ctx.getStart().getLine(), "array does not exist");
+        }
+
+        VarType type = variables.get(ID);
+        if(type != VarType.REAL_ARRAY){
+            error(ctx.getStart().getLine(), "array of type INT does not accept REAL values");
+        }
+
+        Value val = stack.pop();
+        int length = arrayLengths.get(ID);
+        LLVMGenerator.assign_arr_el_double(ID, val.name, index, length);
+    }
+
+
     @Override public void exitReadInt(BaseLanParser.ReadIntContext ctx) {
         String ID = LLVMGenerator.scanfInt();
         stack.push(new Value(ID, VarType.INT));
@@ -59,10 +125,12 @@ public class LLVMActions extends BaseLanBaseListener {
 
     @Override public void exitIdRef(BaseLanParser.IdRefContext ctx) {
         String ID = ctx.ID().getText();
-        VarType type = variables.get(ID);
-        if(type == null) {
-            error(ctx.getStart().getLine(), "variable uninitialized");
+
+        if(!variables.containsKey(ID)) {
+            error(ctx.getStart().getLine(), "variable "+ID+" does not exist");
         }
+
+        VarType type = variables.get(ID);
 
         if( type == VarType.REAL ) {
             ID = LLVMGenerator.loadReal(ID);
@@ -72,6 +140,30 @@ public class LLVMActions extends BaseLanBaseListener {
         if(type == VarType.INT) {
             ID = LLVMGenerator.loadInt(ID);
             stack.push(new Value(ID, type));
+        }
+    }
+
+    @Override public void exitArrayElRef(BaseLanParser.ArrayElRefContext ctx) {
+        String ID = ctx.ID().getText();
+
+        if(!variables.containsKey(ID)) {
+            error(ctx.getStart().getLine(), "array "+ID+" does not exist");
+        }
+
+        VarType type = variables.get(ID);
+        String index = ctx.INT().getText();
+        int length = arrayLengths.get(ID);
+
+        if( type == VarType.REAL_ARRAY ) {
+            ID = LLVMGenerator.loadRealEl(ID, index, length);
+            ID = LLVMGenerator.loadReal(ID);
+            stack.push(new Value(ID, VarType.REAL));
+        }
+
+        if(type == VarType.INT_ARRAY) {
+            ID = LLVMGenerator.loadIntEl(ID, index, length);
+            ID = LLVMGenerator.loadInt(ID);
+            stack.push(new Value(ID, VarType.INT));
         }
     }
 

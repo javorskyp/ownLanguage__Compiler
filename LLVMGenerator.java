@@ -1,9 +1,29 @@
-
 class LLVMGenerator{
    
    static String header_text = "";
    static String main_text = "";
    static int reg = 1;
+
+
+   static void declare_int32_array(String id, int size) {
+      main_text += "%"+id+"=alloca [" + size + " x i32], align 16\n";
+   }
+
+   static void declare_double_array(String id, int size) {
+      main_text += "%" + id + " = alloca [" + size + " x double], align 16\n";
+   }
+
+   static void assign_arr_el_i32(String id, String val, String index, int size){
+      main_text += "%"+reg+" = getelementptr inbounds [" + size + " x i32], [" + size + " x i32]* %" + id + ", i64 0, i64 " + index + "\n";
+      ++reg;
+      main_text += "store i32 "+val+", i32* %"+(reg-1)+", align 16\n";
+   }
+
+   static void assign_arr_el_double(String id, String val, String index, int length){
+      main_text += "%"+reg+" = insertelement["+length+" x double]* %"+id+", double "+val+", i32 "+index+"\n";
+      ++reg;
+      main_text += "store double "+val+", double* %"+(reg-1)+", align 16\n";
+   }
 
    static String loadReal(String id) {
       main_text += "%"+reg+" = load double, double* %"+id+"\n";
@@ -18,6 +38,21 @@ class LLVMGenerator{
       reg++;
       return newId;
    }
+
+   static String loadIntEl(String id, String index, int size) {
+      main_text += "%"+reg+" = getelementptr inbounds [" + size + " x i32], [" + size + " x i32]* %" + id + ", i64 0, i64 " + index + "\n";
+      String newId = String.valueOf(reg);
+      reg++;
+      return newId;
+   }
+
+   static String loadRealEl(String id, String index, int size) {
+      main_text += "%"+reg+" = getelementptr inbounds [" + size + " x double], [" + size + " x double]* %" + id + ", i64 0, i64 " + index + "\n";
+      String newId = String.valueOf(reg);
+      reg++;
+      return newId;
+   }
+
 
    static String scanfInt(){
       main_text += "%"+reg+" = alloca i32\n";
