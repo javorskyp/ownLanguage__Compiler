@@ -42,16 +42,16 @@ class LLVMGenerator{
    }
 
    static void printInt(String id){
-      main_text += "%"+reg+" = load i32, i32* %"+id+"\n";
-      reg++;
-      main_text += "%"+reg+" = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpi, i32 0, i32 0), i32 %"+(reg-1)+")\n";
+//      main_text += "%"+reg+" = load i32, i32* %"+id+"\n";
+//      reg++;
+      main_text += "%"+reg+" = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpi, i32 0, i32 0), i32 "+(id)+")\n";
       reg++;
    }
 
    static void printDouble(String id){
-      main_text += "%"+reg+" = load double, double* %"+id+"\n";
-      reg++;
-      main_text += "%"+reg+" = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpd, i32 0, i32 0), double %"+(reg-1)+")\n";
+//      main_text += "%"+reg+" = load double, double* %"+id+"\n";
+//      reg++;
+      main_text += "%"+reg+" = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpd, i32 0, i32 0), double "+(id)+")\n";
       reg++;
    }
 

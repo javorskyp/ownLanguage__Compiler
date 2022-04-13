@@ -3,7 +3,7 @@ grammar BaseLan;
 prog: ( stat? NEWLINE )*;
 
 stat: ID EQ expr0           #assign
-    | PRINT RBO ID RBC      #print;
+    | PRINT RBO expr0 RBC   #print;
 
 expr0: expr1                #single0
      | expr1 ADD expr1      #sum

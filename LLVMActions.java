@@ -161,14 +161,14 @@ public class LLVMActions extends BaseLanBaseListener {
         }
     }
     @Override public void exitSingle1(BaseLanParser.Single1Context ctx) { }
+
     @Override public void exitPrint(BaseLanParser.PrintContext ctx) {
-        String ID = ctx.ID().getText();
-        VarType type = variables.get(ID);
-        if(type == VarType.INT) {
-            LLVMGenerator.printInt(ID);
+        Value val = stack.pop();
+        if(val.type == VarType.INT) {
+            LLVMGenerator.printInt(val.name);
         }
-        if(type == VarType.REAL) {
-            LLVMGenerator.printDouble(ID);
+        if(val.type == VarType.REAL) {
+            LLVMGenerator.printDouble(val.name);
         }
     }
     @Override public void exitSingle0(BaseLanParser.Single0Context ctx) { }
