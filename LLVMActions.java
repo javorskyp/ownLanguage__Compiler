@@ -1,8 +1,10 @@
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 enum VarType{ INT, REAL, INT_ARRAY, REAL_ARRAY, STRING }
 
@@ -18,7 +20,7 @@ class Value{
 public class LLVMActions extends BaseLanBaseListener {
 
     HashMap<String, VarType> variables = new HashMap<>();
-    HashMap<String, Integer> arrayLengths = new HashMap<>();
+    HashMap<String, Integer> complexVarSize = new HashMap<>();
     Stack<Value> stack = new Stack<>();
 
     @Override public void exitProg(BaseLanParser.ProgContext ctx) {
@@ -39,11 +41,28 @@ public class LLVMActions extends BaseLanBaseListener {
             variables.put(ID, v.type);
         }
 
+        if(v.type == VarType.STRING) {
+            String value = v.name;
+            char[] charValue = value.substring(1, value.length()-1).toCharArray();
+            if(alreadyDefined) {
+                error(ctx.getStart().getLine(), "can not redeclare string");
+            }
+            complexVarSize.put(ID, charValue.length);
+            LLVMGenerator.declare_string(ID, charValue.length);
+            int index = 0;
+            for(char i : charValue) {
+                LLVMGenerator.assign_string_char(ID, i, charValue.length, index);
+                ++index;
+            }
+            LLVMGenerator.assign_string_char(ID, '\0', charValue.length, index);
+        }
+
         if(v.type == VarType.INT) {
             if(!alreadyDefined)
                 LLVMGenerator.declare_i32(ID);
             LLVMGenerator.assign_i32(ID, v.name);
         }
+
         if(v.type == VarType.REAL) {
             if(!alreadyDefined)
                 LLVMGenerator.declare_double(ID);
@@ -51,8 +70,9 @@ public class LLVMActions extends BaseLanBaseListener {
         }
     }
 
-    @Override public void exitAssignString(BaseLanParser.AssignStringContext ctx) {
-
+    @Override public void exitString(BaseLanParser.StringContext ctx) {
+        String value = ctx.STRING().getText();
+        stack.push(new Value(value, VarType.STRING));
     }
 
     @Override public void exitDeclareRealArray(BaseLanParser.DeclareRealArrayContext ctx) {
@@ -60,10 +80,17 @@ public class LLVMActions extends BaseLanBaseListener {
         if(variables.containsKey(ID)) {
             error(ctx.getStart().getLine(), "cant re-declare an array");
         }
-        int length = Integer.parseInt(ctx.INT().getText());
+        List<String> els = ctx.REAL().stream().map(TerminalNode::getText).collect(Collectors.toList());
+        int length = els.size()+1;
         LLVMGenerator.declare_double_array(ID, length);
+
+        int index = 0;
+        for(String el : els) {
+            LLVMGenerator.assign_arr_el_double(ID, el, String.valueOf(index), length);
+            ++index;
+        }
         variables.put(ID, VarType.REAL_ARRAY);
-        arrayLengths.put(ID, length);
+        complexVarSize.put(ID, length);
     }
 
     @Override public void exitDeclareIntArray(BaseLanParser.DeclareIntArrayContext ctx) {
@@ -71,10 +98,20 @@ public class LLVMActions extends BaseLanBaseListener {
         if(variables.containsKey(ID)) {
             error(ctx.getStart().getLine(), "cant re-declare an array");
         }
-        int length = Integer.parseInt(ctx.INT().getText());
+        List<String> els = ctx.INT()
+                .stream()
+                .map(TerminalNode::getText)
+                .collect(Collectors.toList());
+        int length = els.size()+1;
         LLVMGenerator.declare_int32_array(ID, length);
+
+        int index = 0;
+        for(String el : els) {
+            LLVMGenerator.assign_arr_el_i32(ID, el, String.valueOf(index), length);
+            ++index;
+        }
         variables.put(ID, VarType.INT_ARRAY);
-        arrayLengths.put(ID, length);
+        complexVarSize.put(ID, length);
     }
 
     @Override public void exitAssignIntArrayEl(BaseLanParser.AssignIntArrayElContext ctx) {
@@ -90,7 +127,7 @@ public class LLVMActions extends BaseLanBaseListener {
             error(ctx.getStart().getLine(), "array of type REAL does not accept INT values");
         }
         Value val = stack.pop();
-        int length = arrayLengths.get(ID);
+        int length = complexVarSize.get(ID);
         LLVMGenerator.assign_arr_el_i32(ID, val.name, index, length);
     }
 
@@ -108,7 +145,7 @@ public class LLVMActions extends BaseLanBaseListener {
         }
 
         Value val = stack.pop();
-        int length = arrayLengths.get(ID);
+        int length = complexVarSize.get(ID);
         LLVMGenerator.assign_arr_el_double(ID, val.name, index, length);
     }
 
@@ -141,6 +178,10 @@ public class LLVMActions extends BaseLanBaseListener {
             ID = LLVMGenerator.loadInt(ID);
             stack.push(new Value(ID, type));
         }
+
+        if(type == VarType.STRING) {
+            stack.push(new Value(ID, type));
+        }
     }
 
     @Override public void exitArrayElRef(BaseLanParser.ArrayElRefContext ctx) {
@@ -152,7 +193,7 @@ public class LLVMActions extends BaseLanBaseListener {
 
         VarType type = variables.get(ID);
         String index = ctx.INT().getText();
-        int length = arrayLengths.get(ID);
+        int length = complexVarSize.get(ID);
 
         if( type == VarType.REAL_ARRAY ) {
             ID = LLVMGenerator.loadRealEl(ID, index, length);
@@ -261,6 +302,9 @@ public class LLVMActions extends BaseLanBaseListener {
         }
         if(val.type == VarType.REAL) {
             LLVMGenerator.printDouble(val.name);
+        }
+        if(val.type == VarType.STRING) {
+            LLVMGenerator.printString(val.name, complexVarSize.get(val.name));
         }
     }
     @Override public void exitSingle0(BaseLanParser.Single0Context ctx) { }

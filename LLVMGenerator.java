@@ -4,6 +4,29 @@ class LLVMGenerator{
    static String main_text = "";
    static int reg = 1;
 
+   static String generate(){
+      String text;
+      text = "declare i32 @printf(i8*, ...)\n";
+      text += "declare i32 @__isoc99_scanf(i8*, ...)\n";
+      text += "@strpi = constant [4 x i8] c\"%d\\0A\\00\"\n";
+      text += "@strpd = constant [4 x i8] c\"%f\\0A\\00\"\n";
+      text += "@strps = private unnamed_addr constant [4 x i8] c\"%s\\0A\\00\"\n";
+      text += header_text;
+      text += "define i32 @main() nounwind{\n";
+      text += main_text;
+      text += "ret i32 0 }\n";
+      return text;
+   }
+
+   static void declare_string(String id, int size){
+      main_text += "%"+id+" = alloca ["+(size+1)+" x i8], align 1\n";
+   }
+
+   static void assign_string_char(String id, int val, int size, int index) {
+      main_text += "%"+reg+" = getelementptr inbounds [" + (size+1) + " x i8], [" + (size+1) + " x i8]* %" + id + ", i64 0, i64 " + index + "\n";
+      ++reg;
+      main_text += "store i8 "+val+", i8* %"+(reg-1)+", align 1\n";
+   }
 
    static void declare_int32_array(String id, int size) {
       main_text += "%"+id+"=alloca [" + size + " x i32], align 16\n";
@@ -90,18 +113,11 @@ class LLVMGenerator{
       reg++;
    }
 
-
-   static String generate(){
-      String text;
-      text = "declare i32 @printf(i8*, ...)\n";
-      text += "declare i32 @__isoc99_scanf(i8*, ...)\n";
-      text += "@strpi = constant [4 x i8] c\"%d\\0A\\00\"\n";
-      text += "@strpd = constant [4 x i8] c\"%f\\0A\\00\"\n";
-      text += header_text;
-      text += "define i32 @main() nounwind{\n";
-      text += main_text;
-      text += "ret i32 0 }\n";
-      return text;
+   static void printString(String id, int size) {
+      main_text += "%" + reg + " = getelementptr inbounds [" + (size + 1) + " x i8], [" + (size + 1) + " x i8]* %" + id + ", i64 0, i64 0\n";
+      reg++;
+      main_text += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strps, i64 0, i64 0), i8* %" + (reg - 1) + ")\n";
+      reg++;
    }
 
    static void declare_i32(String id){
