@@ -9,3 +9,4 @@ BaseLan*.java
 *.tokens
 .idea
 *.iml
+outputFiles/
