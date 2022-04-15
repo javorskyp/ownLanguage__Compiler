@@ -1,0 +1,5 @@
+print("linie nizej wyswietlam string bez tekstu")
+sa = " "
+print(sa)
+c = "Jeden plus dwa "
+print(c)
