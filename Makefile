@@ -1,13 +1,13 @@
-all: generate compile test clean
+all: clean generate compile test
 
 generate:
-	java -jar antlr-4.9.3-complete.jar -o outputFiles BaseLan.g4
+	java -jar antlr-4.9.3-complete.jar -o . BaseLan.g4
 
 compile:
-	javac -cp antlr-4.9.3-complete.jar:outputFiles:. *.java
+	javac -cp antlr-4.9.3-complete.jar:. *.java
 
 test:
-	java -cp antlr-4.9.3-complete.jar:outputFiles:. Main testfile.test >> testout.ll
+	java -cp antlr-4.9.3-complete.jar:. Main testfile.test >> testout.ll
 	lli testout.ll
 
 clean:
@@ -17,4 +17,4 @@ clean:
 	rm -f *.s
 	rm -f *.tokens
 	rm -f *.bc
-	rm -rf outputFiles
+

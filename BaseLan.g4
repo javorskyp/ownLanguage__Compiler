@@ -1,12 +1,30 @@
 grammar BaseLan;
 
-prog: ( stat? NEWLINE )*;
+prog: block          ;
+
+block: ( stat? NEWLINE )*;
 
 stat: ID EQ expr0                       #assign
     | ID EQ CBO REAL? (CM REAL)* CBC    #declareRealArray
     | ID EQ CBO INT? (CM INT)* CBC      #declareIntArray
     | ID SBO INT SBC EQ expr0           #assignArrayEl
-    | PRINT RBO expr0 RBC               #print;
+    | PRINT RBO expr0 RBC               #print
+    | IF comp ifBody (ELSIF comp elsifBody)* (ELSE elseBody)? ENDIF #startIf;
+
+comp: expr0 compOper expr0;
+
+compOper: EQ EQ                         #equal
+        | NOT EQ                        #notEqual
+        | LESSER EQ                     #lesserEqual
+        | LESSER                        #lesser
+        | GREATER EQ                    #greaterEqual
+        | GREATER                       #greater;
+
+ifBody:  block                     ;
+
+elsifBody:  block              ;
+
+elseBody:  block                ;
 
 expr0: expr1                            #single0
      | expr1 ADD expr1                  #sum
@@ -39,6 +57,9 @@ SUB: '-';
 MULT: '*';
 DIV: '/';
 EQ: '=';
+NOT: '!';
+LESSER: '<';
+GREATER: '>';
 RBO: '(';
 RBC: ')';
 SBO: '[';
@@ -47,6 +68,10 @@ CBO: '{';
 CBC: '}';
 NEWLINE: '\r'? '\n';
 CM: ',';
+ELSE: 'else';
+ELSIF: 'elsif';
+IF: 'if';
+ENDIF: 'endif';
 WS: (' '|'\t')+ { skip(); };
 INT: [0-9]+;
 REAL: [0-9]+ '.' [0-9]+;

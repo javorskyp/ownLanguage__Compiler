@@ -1,3 +1,20 @@
-x = {1, 2, 3, 4, 5}
-y = x[2]
-print(x[2] + x[3])
+if 7>7
+elsif 7>6
+if 8>7
+print(33)
+endif
+else
+print(22)
+endif
+
+if 7>7
+elsif 7>6
+if 8>7
+print(333)
+endif
+else
+print(222)
+endif
+
+
+

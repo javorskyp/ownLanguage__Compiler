@@ -1,11 +1,14 @@
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
 enum VarType{ INT, REAL, INT_ARRAY, REAL_ARRAY, STRING }
+
+enum OperType{ EQ, LEQ, GEQ, LE, GE, NEQ }
 
 class Value{
     public String name;
@@ -26,12 +29,121 @@ public class LLVMActions extends BaseLanBaseListener {
     HashMap<String, VarType> variables = new HashMap<>();
     HashMap<String, Integer> complexVarSize = new HashMap<>();
     Stack<Value> stack = new Stack<>();
+    Stack<OperType> logicalOpers = new Stack<>();
 
     @Override public void exitProg(BaseLanParser.ProgContext ctx) {
         System.out.println(LLVMGenerator.generate());
     }
 
     // Mikolaj
+
+    @Override public void exitComp(BaseLanParser.CompContext ctx) {
+        Value val2 = stack.pop();
+        Value val1 = stack.pop();
+        OperType oper = logicalOpers.pop();
+        List<VarType> allowedTypes = Arrays.asList(VarType.REAL, VarType.INT);
+        if(val1.type != val2.type) {
+            error(ctx.getStart().getLine(), "can't execute logical " + oper.toString() +
+                    " for values of different types - provided types: "+val2.type+" and "+val1.type);
+        }
+        else if(!(allowedTypes.contains(val1.type) && allowedTypes.contains(val2.type))) {
+            error(ctx.getStart().getLine(), "can't execute logical " + oper.toString() +
+                    " for at least one of provided value types - provided types: "+val2.type+" and "+val1.type);
+        }
+        else if(val1.type == VarType.INT) {
+            if(oper == OperType.EQ) {
+                LLVMGenerator.ieq(val1, val2);
+            }
+            if(oper == OperType.LEQ) {
+                LLVMGenerator.ileq(val1, val2);
+            }
+            if(oper == OperType.GEQ) {
+                LLVMGenerator.igeq(val1, val2);
+            }
+            if(oper == OperType.NEQ) {
+                LLVMGenerator.ineq(val1, val2);
+            }
+            if(oper == OperType.LE) {
+                LLVMGenerator.ile(val1, val2);
+            }
+            if(oper == OperType.GE) {
+                LLVMGenerator.ige(val1, val2);
+            }
+        }
+        else if(val1.type == VarType.REAL) {
+            if(oper == OperType.EQ) {
+                LLVMGenerator.req(val1, val2);
+            }
+            if(oper == OperType.LEQ) {
+                LLVMGenerator.rleq(val1, val2);
+            }
+            if(oper == OperType.GEQ) {
+                LLVMGenerator.rgeq(val1, val2);
+            }
+            if(oper == OperType.NEQ) {
+                LLVMGenerator.rneq(val1, val2);
+            }
+            if(oper == OperType.LE) {
+                LLVMGenerator.rle(val1, val2);
+            }
+            if(oper == OperType.GE) {
+                LLVMGenerator.rge(val1, val2);
+            }
+        }
+    }
+
+    @Override public void exitEqual(BaseLanParser.EqualContext ctx) {
+        logicalOpers.push(OperType.EQ);
+    }
+
+    @Override public void exitNotEqual(BaseLanParser.NotEqualContext ctx) {
+        logicalOpers.push(OperType.NEQ);
+    }
+
+    @Override public void exitLesserEqual(BaseLanParser.LesserEqualContext ctx) {
+        logicalOpers.push(OperType.LEQ);
+    }
+
+    @Override public void exitLesser(BaseLanParser.LesserContext ctx) {
+        logicalOpers.push(OperType.LE);
+    }
+
+    @Override public void exitGreaterEqual(BaseLanParser.GreaterEqualContext ctx) {
+        logicalOpers.push(OperType.GEQ);
+    }
+
+    @Override public void exitGreater(BaseLanParser.GreaterContext ctx) {
+        logicalOpers.push(OperType.GE);
+    }
+
+    @Override public void enterIfBody(BaseLanParser.IfBodyContext ctx) {
+        LLVMGenerator.ifStart();
+    }
+
+    @Override public void enterElsifBody(BaseLanParser.ElsifBodyContext ctx) {
+        LLVMGenerator.elsifStart();
+    }
+
+    @Override public void enterElseBody(BaseLanParser.ElseBodyContext ctx) {
+        LLVMGenerator.elseStart();
+    }
+
+    @Override public void exitIfBody(BaseLanParser.IfBodyContext ctx) {
+        LLVMGenerator.ifEnd();
+    }
+
+    @Override public void exitElsifBody(BaseLanParser.ElsifBodyContext ctx) {
+        LLVMGenerator.elsifEnd();
+    }
+
+    @Override public void exitElseBody(BaseLanParser.ElseBodyContext ctx) {
+//        LLVMGenerator.elseEnd();
+    }
+
+    @Override public void exitStartIf(BaseLanParser.StartIfContext ctx) {
+        LLVMGenerator.endConditional();
+    }
+
     @Override public void exitAssign(BaseLanParser.AssignContext ctx) {
         String ID = ctx.ID().getText();
         Value v = stack.pop();

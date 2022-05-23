@@ -1,8 +1,30 @@
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
+
 class LLVMGenerator{
    
    static String header_text = "";
    static String main_text = "";
    static int reg = 1;
+   static int br = 0;
+   static Map<Integer,Integer> else_counter_map = new HashMap<>();
+   static int end_counter = 0;
+   static Stack<Integer> brStack = new Stack<Integer>();
+   static Stack<Integer> endStack = new Stack<Integer>();
+
+   private static void incrementElseCounter(int level) {
+      if(else_counter_map.get(level) == null) {
+         else_counter_map.put(level, 0);
+         return;
+      }
+      int current = else_counter_map.get(level);
+      else_counter_map.put(level, ++current);
+   }
+
+   private static int getElseCounter(int level) {
+      return else_counter_map.get(level);
+   }
 
    static String generate(){
       String text;
@@ -184,5 +206,114 @@ class LLVMGenerator{
    static void fptosi(String id){
       main_text += "%"+reg+" = fptosi double "+id+" to i32\n";
       reg++;
+   }
+
+   static void ieq(Value val1, Value val2){
+      main_text += "%"+reg+" = icmp eq i32 "+val1.name+", "+val2.name+"\n";
+      reg++;
+   }
+
+   static void ileq(Value val1, Value val2){
+      main_text += "%"+reg+" = icmp sle i32 "+val1.name+", "+val2.name+"\n";
+      reg++;
+   }
+
+   static void igeq(Value val1, Value val2){
+      main_text += "%"+reg+" = icmp sge i32 "+val1.name+", "+val2.name+"\n";
+      reg++;
+   }
+
+   static void ineq(Value val1, Value val2){
+      main_text += "%"+reg+" = icmp ne i32 "+val1.name+", "+val2.name+"\n";
+      reg++;
+   }
+
+   static void ile(Value val1, Value val2){
+      main_text += "%"+reg+" = icmp slt i32 "+val1.name+", "+val2.name+"\n";
+      reg++;
+   }
+
+   static void ige(Value val1, Value val2){
+      main_text += "%"+reg+" = icmp sgt i32 "+val1.name+", "+val2.name+"\n";
+      reg++;
+   }
+
+   static void req(Value val1, Value val2){
+      main_text += "%"+reg+" = fcmp eq double "+val1.name+", "+val2.name+"\n";
+      reg++;
+   }
+
+   static void rleq(Value val1, Value val2){
+      main_text += "%"+reg+" = fcmp sle double "+val1.name+", "+val2.name+"\n";
+      reg++;
+   }
+
+   static void rgeq(Value val1, Value val2){
+      main_text += "%"+reg+" = fcmp sge double "+val1.name+", "+val2.name+"\n";
+      reg++;
+   }
+
+   static void rneq(Value val1, Value val2){
+      main_text += "%"+reg+" = fcmp ne double "+val1.name+", "+val2.name+"\n";
+      reg++;
+   }
+
+   static void rle(Value val1, Value val2){
+      main_text += "%"+reg+" = fcmp slt double "+val1.name+", "+val2.name+"\n";
+      reg++;
+   }
+
+   static void rge(Value val1, Value val2){
+      main_text += "%"+reg+" = fcmp sgt double "+val1.name+", "+val2.name+"\n";
+      reg++;
+   }
+
+   static void ifStart() {
+      br++;
+      incrementElseCounter(br);
+      end_counter++;
+      brStack.push(br);
+      endStack.push(end_counter);
+      main_text += "br i1 %"+(reg-1)+", label %true"+br+"_"+getElseCounter(br)+", label %false"+br+"_"+getElseCounter(br)+"\n";
+      main_text += "true"+br+"_"+getElseCounter(br)+":\n";
+   }
+
+   static void elsifStart() {
+      int b = brStack.peek();
+      incrementElseCounter(b);
+      main_text += "br i1 %"+(reg-1)+", label %true"+b+"_"+getElseCounter(b)+", label %false"+b+"_"+getElseCounter(b)+"\n";
+      main_text += "true"+br+"_"+getElseCounter(b)+":\n";
+   }
+
+
+   static void elseStart() {
+      incrementElseCounter(brStack.peek());
+      // main_text += "br i1 %"+(reg-1)+", label %true"+br+"_"+else_counter+", label %false"+br+"_"+else_counter+"\n";
+   }
+
+   static void ifEnd() {
+      int b = brStack.peek();
+      main_text += "br label %end"+endStack.peek()+"\n";
+      main_text += "false"+br+"_"+getElseCounter(b)+":\n";
+   }
+
+   static void elsifEnd() {
+      int b = brStack.peek();
+      main_text += "br label %end"+endStack.peek()+"\n";
+      main_text += "false"+b+"_"+getElseCounter(b)+":\n";
+   }
+
+
+   static void elseEnd() {
+      main_text += "br label %end"+endStack.peek()+"\n";
+   }
+
+   static void endConditional() {
+      int b = brStack.pop();
+      int end = endStack.pop();
+      main_text += "br label %end"+end+"\n";
+      main_text += "end"+end+":\n";
+      incrementElseCounter(b);
+      ++end_counter;
    }
 }
