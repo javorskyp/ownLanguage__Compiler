@@ -6,9 +6,16 @@ block: ( (stat|function)? NEWLINE )*;
 
 function: realFunction | intFunction;
 
-realFunction: REALD ID RBO ((INTD|REALD) ID (CM (INTD|REALD) ID)*)? RBC COLON funBody RET expr0 NEWLINE END;
+//realFunction: REALD ID RBO ((INTD|REALD) ID (CM (INTD|REALD) ID)*)? RBC COLON funBody RET expr0 NEWLINE END;
+realFunction: REALD ID funDefParams funBody RET expr0 NEWLINE END;
 
-intFunction: INTD ID RBO ((INTD|REALD) ID (CM (INTD|REALD) ID)*)? RBC COLON funBody RET expr0 NEWLINE END;
+//intFunction: INTD ID RBO ((INTD|REALD) ID (CM (INTD|REALD) ID)*)? RBC COLON funBody RET expr0 NEWLINE END;
+intFunction: INTD ID funDefParams funBody RET expr0 NEWLINE END;
+
+funDefParams: RBO (param (CM param)*)? RBC COLON;
+
+param: INTD ID                          #intParam
+     | REALD ID                         #realParam;
 
 funBody: (stat? NEWLINE)*;
 

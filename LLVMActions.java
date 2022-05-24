@@ -7,16 +7,6 @@ enum VarType{ INT, REAL, INT_ARRAY, REAL_ARRAY, STRING }
 
 enum OperType{ EQ, LEQ, GEQ, LE, GE, NEQ }
 
-class Function{
-    public String name;
-    public VarType returnType;
-
-    public Function(String name, VarType retVal) {
-        name = name;
-        returnType = retVal;
-    }
-}
-
 class Value{
     public String name;
     public VarType type;
@@ -38,6 +28,7 @@ public class LLVMActions extends BaseLanBaseListener {
     HashMap<String, VarType> localVariables = new HashMap<>();
     HashMap<String, Integer> localComplexVarSize = new HashMap<>();
     HashMap<String, VarType> functions = new HashMap<>();
+    Queue<Value> functionParams = new ArrayDeque<>();
     Stack<Value> stack = new Stack<>();
     Stack<OperType> logicalOpers = new Stack<>();
     Boolean global = true;
@@ -314,6 +305,20 @@ public class LLVMActions extends BaseLanBaseListener {
 
     @Override public void exitFunCall(BaseLanParser.FunCallContext ctx) {
         String funId = ctx.ID().getText();
+
+        int argCount = ctx.expr0().size();
+        List<String> valuesIds = new ArrayList<>();
+        List<VarType> valuesTypes = new ArrayList<>();
+
+        for(int i = 0; i<argCount; ++i) {
+            Value val = stack.pop();
+            valuesIds.add(val.name);
+            valuesTypes.add(val.type);
+        }
+
+        Collections.reverse(valuesIds);
+        Collections.reverse(valuesTypes);
+
         if(functions.size() == 0) {
             error(ctx.getStart().getLine(), "no functions present");
         }
@@ -322,13 +327,12 @@ public class LLVMActions extends BaseLanBaseListener {
             error(ctx.getStart().getLine(), "function "+funId+" does not exist");
         }
         else {
-
             VarType varType = functions.get(funId);
             if (varType.equals(VarType.REAL)) {
-                String ID = LLVMGenerator.call_real_function(funId);
+                String ID = LLVMGenerator.call_real_function(funId, valuesIds, valuesTypes);
                 stack.push(new Value(ID, VarType.REAL));
             } else {
-                String ID = LLVMGenerator.call_int_function(funId);
+                String ID = LLVMGenerator.call_int_function(funId, valuesIds, valuesTypes);
                 stack.push(new Value(ID, VarType.INT));
             }
         }
@@ -514,7 +518,7 @@ public class LLVMActions extends BaseLanBaseListener {
     }
 
     @Override public void enterRealFunction(BaseLanParser.RealFunctionContext ctx) {
-        String ID = ctx.ID(0).getText();
+        String ID = ctx.ID().getText();
         functions.put(ID, VarType.REAL);
         LLVMGenerator.declare_real_function(ID);
     }
@@ -530,7 +534,7 @@ public class LLVMActions extends BaseLanBaseListener {
     }
 
     @Override public void enterIntFunction(BaseLanParser.IntFunctionContext ctx) {
-        String ID = ctx.ID(0).getText();
+        String ID = ctx.ID().getText();
         functions.put(ID, VarType.INT);
         LLVMGenerator.declare_int_function(ID);
     }
@@ -544,6 +548,23 @@ public class LLVMActions extends BaseLanBaseListener {
         id = LLVMGenerator.loadInt(id);
         LLVMGenerator.exit_int_function(id);
     }
+
+    @Override public void exitIntParam(BaseLanParser.IntParamContext ctx) {
+        Value param = new Value(ctx.ID().getText(), VarType.INT);
+        functionParams.add(param);
+        localVariables.put(param.name, param.type);
+    }
+
+    @Override public void exitRealParam(BaseLanParser.RealParamContext ctx) {
+        Value param = new Value(ctx.ID().getText(), VarType.REAL);
+        functionParams.add(param);
+        localVariables.put(param.name, param.type);
+    }
+
+    @Override public void exitFunDefParams(BaseLanParser.FunDefParamsContext ctx) {
+        LLVMGenerator.declare_fun_param_list(functionParams);
+    }
+
 
     @Override public void enterBlock(BaseLanParser.BlockContext ctx) { }
 }

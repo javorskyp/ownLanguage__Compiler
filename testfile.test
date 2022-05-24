@@ -1,14 +1,53 @@
-real siema():
-    return 2.0
+real siema(int x, real y):
+    z=22.0 + (real)x
+    return z
 end
 
-a = siema()
-print(a)
+int gowno(int x, int y):
+    return x*y
+end
+
+print(siema(10,20.0))
+print(gowno(2,3))
+
+
+if 7>7:
+elsif 7>6:
+    if 8>7:
+        print(33)
+    endif
+else:
+    print(22)
+endif
 
 int siemanko():
-    return 3
+    return gowno(2,3)
 end
 
 c = siemanko()
 print(c)
+
+if 7>7:
+elsif 7>6:
+    if 8>7:
+        print(333)
+    endif
+else:
+    print(222)
+endif
+
+x=3
+repeat 10:
+    x = x+3
+    if x<12:
+        print("jeden")
+    elsif x<18:
+        print("dwa")
+    else:
+        print("trzy")
+    endif
+end
+
+readInt()
+
 

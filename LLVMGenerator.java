@@ -1,6 +1,4 @@
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 class LLVMGenerator{
    
@@ -348,7 +346,7 @@ class LLVMGenerator{
    }
 
    static void declare_real_function(String ID) {
-      update_text("define dso_local double @"+ID+"() #0 {\n");
+      update_text("define dso_local double @"+ID+"(");
    }
 
    static void exit_real_function(String ID) {
@@ -357,7 +355,7 @@ class LLVMGenerator{
    }
 
    static void declare_int_function(String ID) {
-      update_text("define dso_local i32 @"+ID+"() #0 {\n");
+      update_text("define dso_local i32 @"+ID+"(");
    }
 
    static void exit_int_function(String ID) {
@@ -374,17 +372,63 @@ class LLVMGenerator{
       }
    }
 
-   static String call_real_function(String funId) {
-      update_text("%"+reg+" = call double @"+funId+"()\n");
+   static List<String> prepareLocalVarsList(List<String> paramNames, List<VarType> paramTypes) {
+      List<String> localNames = new ArrayList<>();
+      for(int i = 0; i < paramNames.size(); ++i) {
+         String valName = paramNames.get(i);
+         String valId;
+         valId = Integer.toString(reg);
+         ++reg;
+         if(paramTypes.get(i).equals(VarType.INT)){
+            declare_i32(valId);
+            assign_i32(valId, valName);
+         }
+         else{
+            declare_double(valId);
+            assign_double(valId, valName);
+         }
+         localNames.add(valId);
+      }
+      return localNames;
+   }
+
+   static String appendCallParamList(List<String> localNames, List<VarType> paramTypes){
+      for(int i = 0; i < localNames.size(); ++i) {
+         String valName = localNames.get(i);
+         String valType = paramTypes.get(i).equals(VarType.REAL) ? "double*" : "i32*";
+         update_text(valType+" %"+valName);
+         if(i < localNames.size()-1){
+            update_text(", ");
+         }
+      }
+      update_text(")\n");
       String id = "%"+reg;
       reg++;
       return id;
    }
 
-   static String call_int_function(String funId) {
-      update_text("%"+reg+" = call i32 @"+funId+"()\n");
-      String id = "%"+reg;
-      reg++;
-      return id;
+   static String call_real_function(String funId, List<String> paramNames, List<VarType> paramTypes) {
+      //declare assign
+      List<String> localNames = prepareLocalVarsList(paramNames, paramTypes);
+      update_text("%"+reg+" = call double @"+funId+"(");
+      return appendCallParamList(localNames, paramTypes);
+   }
+
+   static String call_int_function(String funId, List<String> paramNames, List<VarType> paramTypes) {
+      List<String> localNames = prepareLocalVarsList(paramNames, paramTypes);
+      update_text("%"+reg+" = call i32 @"+funId+"(");
+      return appendCallParamList(localNames, paramTypes);
+   }
+
+   static void declare_fun_param_list(Queue<Value> functionParams) {
+      while(!functionParams.isEmpty()){
+         Value value = functionParams.remove();
+         String type = value.type.equals(VarType.INT)? "i32*" : "double*";
+         update_text(type+" %"+value.name);
+         if(!functionParams.isEmpty()){
+            update_text(", ");
+         }
+      }
+      update_text(") {\n");
    }
 }
