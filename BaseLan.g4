@@ -9,7 +9,8 @@ stat: ID EQ expr0                       #assign
     | ID EQ CBO INT? (CM INT)* CBC      #declareIntArray
     | ID SBO INT SBC EQ expr0           #assignArrayEl
     | PRINT RBO expr0 RBC               #print
-    | IF comp ifBody (ELSIF comp elsifBody)* (ELSE elseBody)? ENDIF #startIf;
+    | REPEAT INT COLON repeatBody ERPT  #repeat
+    | IF comp COLON ifBody (ELSIF comp COLON elsifBody)* (ELSE COLON elseBody)? ENDIF #startIf;
 
 comp: expr0 compOper expr0;
 
@@ -20,11 +21,13 @@ compOper: EQ EQ                         #equal
         | GREATER EQ                    #greaterEqual
         | GREATER                       #greater;
 
-ifBody:  block                     ;
+repeatBody: block                       ;
 
-elsifBody:  block              ;
+ifBody:  block                          ;
 
-elseBody:  block                ;
+elsifBody:  block                       ;
+
+elseBody:  block                        ;
 
 expr0: expr1                            #single0
      | expr1 ADD expr1                  #sum
@@ -45,6 +48,8 @@ expr2: INT                              #int
      | ID SBO INT SBC                   #arrayElRef
      | STRING                           #string;
 
+REPEAT: 'repeat';
+ERPT: 'end';
 READ_INT: 'readInt()';
 READ_REAL: 'readReal()';
 PRINT: 'print';
@@ -71,6 +76,7 @@ CM: ',';
 ELSE: 'else';
 ELSIF: 'elsif';
 IF: 'if';
+COLON: ':';
 ENDIF: 'endif';
 WS: (' '|'\t')+ { skip(); };
 INT: [0-9]+;

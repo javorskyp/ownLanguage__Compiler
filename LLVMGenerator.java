@@ -12,6 +12,7 @@ class LLVMGenerator{
    static int end_counter = 0;
    static Stack<Integer> brStack = new Stack<Integer>();
    static Stack<Integer> endStack = new Stack<Integer>();
+   static Stack<Integer> whileStack = new Stack<>();
 
    private static void incrementElseCounter(int level) {
       if(else_counter_map.get(level) == null) {
@@ -302,11 +303,11 @@ class LLVMGenerator{
       main_text += "br label %end"+endStack.peek()+"\n";
       main_text += "false"+b+"_"+getElseCounter(b)+":\n";
    }
-
-
-   static void elseEnd() {
-      main_text += "br label %end"+endStack.peek()+"\n";
-   }
+//
+//
+//   static void elseEnd() {
+//      main_text += "br label %end"+endStack.peek()+"\n";
+//   }
 
    static void endConditional() {
       int b = brStack.pop();
@@ -315,5 +316,32 @@ class LLVMGenerator{
       main_text += "end"+end+":\n";
       incrementElseCounter(b);
       ++end_counter;
+   }
+
+   static void startRepeat(int repeatCount) {
+      String counter = Integer.toString(reg);
+      declare_i32(counter);
+      ++reg;
+      assign_i32(counter, "0");
+      br++;
+      main_text += "br label %cond"+br+"\n";
+      main_text += "cond"+br+":\n";
+
+      String newId = loadInt(counter);
+      sum_i32(newId, "1");
+      assign_i32(counter, "%"+(reg-1));
+
+      main_text+="%"+reg+" = icmp slt i32 %"+(reg-2)+", "+repeatCount+"\n";
+      reg++;
+
+      main_text+="br i1 %"+(reg-1)+", label %true"+br+", label %false"+br+"\n";
+      main_text+="true"+br+":\n";
+      brStack.push(br);
+   }
+
+   static void endRepeat(){
+      int b = brStack.pop();
+      main_text+="br label %cond"+b+"\n";
+      main_text+="false"+b+":\n";
    }
 }

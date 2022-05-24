@@ -440,4 +440,16 @@ public class LLVMActions extends BaseLanBaseListener {
         return (valType == VarType.INT && arrType == VarType.INT_ARRAY)
                 || (valType == VarType.REAL && arrType == VarType.REAL_ARRAY);
     }
+
+    @Override public void enterRepeat(BaseLanParser.RepeatContext ctx) {
+        int count = Integer.parseInt(ctx.INT().getText());
+        if(count<=0) {
+            error(ctx.getStart().getLine(), "repeat value <= 0");
+        }
+        LLVMGenerator.startRepeat(count);
+    }
+
+    @Override public void exitRepeat(BaseLanParser.RepeatContext ctx) {
+        LLVMGenerator.endRepeat();
+    }
 }
