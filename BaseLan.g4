@@ -2,15 +2,24 @@ grammar BaseLan;
 
 prog: block          ;
 
-block: ( stat? NEWLINE )*;
+block: ( (stat|function)? NEWLINE )*;
+
+function: realFunction | intFunction;
+
+realFunction: REALD ID RBO ((INTD|REALD) ID (CM (INTD|REALD) ID)*)? RBC COLON funBody RET expr0 NEWLINE END;
+
+intFunction: INTD ID RBO ((INTD|REALD) ID (CM (INTD|REALD) ID)*)? RBC COLON funBody RET expr0 NEWLINE END;
+
+funBody: (stat? NEWLINE)*;
 
 stat: ID EQ expr0                       #assign
     | ID EQ CBO REAL? (CM REAL)* CBC    #declareRealArray
     | ID EQ CBO INT? (CM INT)* CBC      #declareIntArray
     | ID SBO INT SBC EQ expr0           #assignArrayEl
     | PRINT RBO expr0 RBC               #print
-    | REPEAT INT COLON repeatBody ERPT  #repeat
-    | IF comp COLON ifBody (ELSIF comp COLON elsifBody)* (ELSE COLON elseBody)? ENDIF #startIf;
+    | REPEAT INT COLON repeatBody END   #repeat
+    | IF comp COLON ifBody (ELSIF comp COLON elsifBody)* (ELSE COLON elseBody)? ENDIF #startIf
+    | expr0                             #noRetExpr;
 
 comp: expr0 compOper expr0;
 
@@ -46,10 +55,16 @@ expr2: INT                              #int
      | READ_INT                         #readInt
      | READ_REAL                        #readReal
      | ID SBO INT SBC                   #arrayElRef
-     | STRING                           #string;
+     | STRING                           #string
+     | ID RBO (expr0 (CM expr0)*)? RBC  #funCall;
 
+
+FUN: 'fun';
+ENDFUN: 'endfun';
+VOID: 'void';
+RET: 'return';
 REPEAT: 'repeat';
-ERPT: 'end';
+END: 'end';
 READ_INT: 'readInt()';
 READ_REAL: 'readReal()';
 PRINT: 'print';

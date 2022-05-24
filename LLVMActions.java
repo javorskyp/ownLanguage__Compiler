@@ -1,14 +1,21 @@
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 import java.util.stream.Collectors;
 
 enum VarType{ INT, REAL, INT_ARRAY, REAL_ARRAY, STRING }
 
 enum OperType{ EQ, LEQ, GEQ, LE, GE, NEQ }
+
+class Function{
+    public String name;
+    public VarType returnType;
+
+    public Function(String name, VarType retVal) {
+        name = name;
+        returnType = retVal;
+    }
+}
 
 class Value{
     public String name;
@@ -26,10 +33,14 @@ class Value{
 
 public class LLVMActions extends BaseLanBaseListener {
 
-    HashMap<String, VarType> variables = new HashMap<>();
-    HashMap<String, Integer> complexVarSize = new HashMap<>();
+    HashMap<String, VarType> globalVariables = new HashMap<>();
+    HashMap<String, Integer> globalComplexVarSize = new HashMap<>();
+    HashMap<String, VarType> localVariables = new HashMap<>();
+    HashMap<String, Integer> localComplexVarSize = new HashMap<>();
+    HashMap<String, VarType> functions = new HashMap<>();
     Stack<Value> stack = new Stack<>();
     Stack<OperType> logicalOpers = new Stack<>();
+    Boolean global = true;
 
     @Override public void exitProg(BaseLanParser.ProgContext ctx) {
         System.out.println(LLVMGenerator.generate());
@@ -136,10 +147,6 @@ public class LLVMActions extends BaseLanBaseListener {
         LLVMGenerator.elsifEnd();
     }
 
-    @Override public void exitElseBody(BaseLanParser.ElseBodyContext ctx) {
-//        LLVMGenerator.elseEnd();
-    }
-
     @Override public void exitStartIf(BaseLanParser.StartIfContext ctx) {
         LLVMGenerator.endConditional();
     }
@@ -148,13 +155,18 @@ public class LLVMActions extends BaseLanBaseListener {
         String ID = ctx.ID().getText();
         Value v = stack.pop();
         boolean alreadyDefined = false;
-        if(variables.containsKey(ID)) {
+        if(global && globalVariables.containsKey(ID) || !global && localVariables.containsKey(ID)) {
             alreadyDefined = true;
-            if(v.type != variables.get(ID))
-                error(ctx.getStart().getLine(), "can't assign value of type "+v.type+" to variable "+ID+" of type "+variables.get(ID));
+            if(!(global && v.type == globalVariables.get(ID) || !global && v.type == localVariables.get(ID)))
+                error(ctx.getStart().getLine(), "can't assign value of type "+v.type+" to variable "+ID+" of type "+ globalVariables.get(ID));
         }
         else{
-            variables.put(ID, v.type);
+            if(global) {
+                globalVariables.put(ID, v.type);
+            }
+            else {
+                localVariables.put(ID, v.type);
+            }
         }
 
         if(v.type == VarType.STRING) {
@@ -163,7 +175,9 @@ public class LLVMActions extends BaseLanBaseListener {
             if(alreadyDefined) {
                 error(ctx.getStart().getLine(), "can not redeclare string");
             }
-            complexVarSize.put(ID, charValue.length);
+
+            if(global) globalComplexVarSize.put(ID, charValue.length);
+            else localComplexVarSize.put(ID, charValue.length);
             LLVMGenerator.declare_string(ID, charValue.length);
             int index = 0;
             for(char i : charValue) {
@@ -193,25 +207,32 @@ public class LLVMActions extends BaseLanBaseListener {
 
     @Override public void exitDeclareRealArray(BaseLanParser.DeclareRealArrayContext ctx) {
         String ID = ctx.ID().getText();
-        if(variables.containsKey(ID)) {
+        if(global && globalVariables.containsKey(ID) || !global && localVariables.containsKey(ID)) {
             error(ctx.getStart().getLine(), "cant re-declare an array");
         }
+        String prefix = global? "@" : "%";
         List<String> els = ctx.REAL().stream().map(TerminalNode::getText).collect(Collectors.toList());
         int length = els.size()+1;
-        LLVMGenerator.declare_double_array(ID, length);
+        LLVMGenerator.declare_double_array(prefix+ID, length);
 
         int index = 0;
         for(String el : els) {
-            LLVMGenerator.assign_arr_el_double(ID, el, String.valueOf(index), length);
+            LLVMGenerator.assign_arr_el_double(prefix+ID, el, String.valueOf(index), length);
             ++index;
         }
-        variables.put(ID, VarType.REAL_ARRAY);
-        complexVarSize.put(ID, length);
+        if(global){
+            globalVariables.put(ID, VarType.REAL_ARRAY);
+            globalComplexVarSize.put(ID, length);
+        }
+        else{
+            localVariables.put(ID, VarType.REAL_ARRAY);
+            localComplexVarSize.put(ID, length);
+        }
     }
 
     @Override public void exitDeclareIntArray(BaseLanParser.DeclareIntArrayContext ctx) {
         String ID = ctx.ID().getText();
-        if(variables.containsKey(ID)) {
+        if(global && globalVariables.containsKey(ID) || !global && localVariables.containsKey(ID)) {
             error(ctx.getStart().getLine(), "cant re-declare an array");
         }
         List<String> els = ctx.INT()
@@ -226,25 +247,30 @@ public class LLVMActions extends BaseLanBaseListener {
             LLVMGenerator.assign_arr_el_i32(ID, el, String.valueOf(index), length);
             ++index;
         }
-        variables.put(ID, VarType.INT_ARRAY);
-        complexVarSize.put(ID, length);
+        if(global){
+            globalVariables.put(ID, VarType.INT_ARRAY);
+            globalComplexVarSize.put(ID, length);
+        }
+        else{
+            localVariables.put(ID, VarType.INT_ARRAY);
+            localComplexVarSize.put(ID, length);
+        }
     }
 
     @Override public void exitAssignArrayEl(BaseLanParser.AssignArrayElContext ctx) {
         String ID = ctx.ID().getText();
         String index = ctx.INT().getText();
 
-        if(!variables.containsKey(ID)) {
+        if(!(global && globalVariables.containsKey(ID)) && (!global && !localVariables.containsKey(ID))) {
             error(ctx.getStart().getLine(), "array does not exist");
         }
 
-        VarType type = variables.get(ID);
+        VarType type =global? globalVariables.get(ID) : localVariables.get(ID);
         Value val = stack.pop();
-        int length = complexVarSize.get(ID);
+        int length = global ? globalComplexVarSize.get(ID) : localComplexVarSize.get(ID);
         if(!doesValueTypeMatchArrayType(val.type, type)) {
             error(ctx.getStart().getLine(), "array of type "+type+"does not accept values of type "+val.type);
         }
-
         if(type == VarType.REAL_ARRAY) {
             LLVMGenerator.assign_arr_el_double(ID, val.name, index, length);
         }
@@ -266,12 +292,11 @@ public class LLVMActions extends BaseLanBaseListener {
     @Override public void exitIdRef(BaseLanParser.IdRefContext ctx) {
         String ID = ctx.ID().getText();
 
-        if(!variables.containsKey(ID)) {
+        if(!(global && globalVariables.containsKey(ID)) && (!global && !localVariables.containsKey(ID))) {
             error(ctx.getStart().getLine(), "variable "+ID+" does not exist");
         }
 
-        VarType type = variables.get(ID);
-
+        VarType type = global ? globalVariables.get(ID) : localVariables.get(ID);
         if( type == VarType.REAL ) {
             ID = LLVMGenerator.loadReal(ID);
             stack.push(new Value(ID, type));
@@ -287,16 +312,38 @@ public class LLVMActions extends BaseLanBaseListener {
         }
     }
 
+    @Override public void exitFunCall(BaseLanParser.FunCallContext ctx) {
+        String funId = ctx.ID().getText();
+        if(functions.size() == 0) {
+            error(ctx.getStart().getLine(), "no functions present");
+        }
+
+        if(!functions.containsKey(funId)) {
+            error(ctx.getStart().getLine(), "function "+funId+" does not exist");
+        }
+        else {
+
+            VarType varType = functions.get(funId);
+            if (varType.equals(VarType.REAL)) {
+                String ID = LLVMGenerator.call_real_function(funId);
+                stack.push(new Value(ID, VarType.REAL));
+            } else {
+                String ID = LLVMGenerator.call_int_function(funId);
+                stack.push(new Value(ID, VarType.INT));
+            }
+        }
+    }
+
     @Override public void exitArrayElRef(BaseLanParser.ArrayElRefContext ctx) {
         String ID = ctx.ID().getText();
 
-        if(!variables.containsKey(ID)) {
+        if(!(global && globalVariables.containsKey(ID)) && (!global && !localVariables.containsKey(ID))) {
             error(ctx.getStart().getLine(), "array "+ID+" does not exist");
         }
+        VarType type = global ? globalVariables.get(ID) : localVariables.get(ID);
+        int length = global ? globalComplexVarSize.get(ID): localComplexVarSize.get(ID);
 
-        VarType type = variables.get(ID);
         String index = ctx.INT().getText();
-        int length = complexVarSize.get(ID);
 
         if( type == VarType.REAL_ARRAY ) {
             ID = LLVMGenerator.loadRealEl(ID, index, length);
@@ -409,7 +456,7 @@ public class LLVMActions extends BaseLanBaseListener {
         if(val.type == VarType.STRING) {
             int size = 0;
             String ID = val.name;
-            if(!variables.containsKey(val.name)){
+            if((global && !globalVariables.containsKey(ID)) || (!global && !localVariables.containsKey(ID))){
                 String value = val.name;
                 char[] charValue = value.substring(1, value.length()-1).toCharArray();
                 ID = String.valueOf(LLVMGenerator.reg);
@@ -424,7 +471,7 @@ public class LLVMActions extends BaseLanBaseListener {
                 size = charValue.length;
             }
             else{
-                size = complexVarSize.get(val.name);
+                size = global? globalComplexVarSize.get(val.name):localComplexVarSize.get(val.name);
             }
             LLVMGenerator.printString(ID, size);
         }
@@ -452,4 +499,51 @@ public class LLVMActions extends BaseLanBaseListener {
     @Override public void exitRepeat(BaseLanParser.RepeatContext ctx) {
         LLVMGenerator.endRepeat();
     }
+
+    @Override public void enterFunction(BaseLanParser.FunctionContext ctx) {
+        global = false;
+        LLVMGenerator.global = false;
+        LLVMGenerator.global_reg = LLVMGenerator.reg;
+        LLVMGenerator.reg = 1;
+    }
+
+    @Override public void exitFunction(BaseLanParser.FunctionContext ctx) {
+        global = true;
+        LLVMGenerator.reg = LLVMGenerator.global_reg;
+        LLVMGenerator.global = true;
+    }
+
+    @Override public void enterRealFunction(BaseLanParser.RealFunctionContext ctx) {
+        String ID = ctx.ID(0).getText();
+        functions.put(ID, VarType.REAL);
+        LLVMGenerator.declare_real_function(ID);
+    }
+
+    @Override public void exitRealFunction(BaseLanParser.RealFunctionContext ctx) {
+        Value val = stack.pop();
+        String id = Integer.toString(LLVMGenerator.reg);
+        LLVMGenerator.declare_double(id);
+        LLVMGenerator.reg++;
+        LLVMGenerator.assign_double(id, val.name);
+        id = LLVMGenerator.loadReal(id);
+        LLVMGenerator.exit_real_function(id);
+    }
+
+    @Override public void enterIntFunction(BaseLanParser.IntFunctionContext ctx) {
+        String ID = ctx.ID(0).getText();
+        functions.put(ID, VarType.INT);
+        LLVMGenerator.declare_int_function(ID);
+    }
+
+    @Override public void exitIntFunction(BaseLanParser.IntFunctionContext ctx) {
+        Value val = stack.pop();
+        String id = Integer.toString(LLVMGenerator.reg);
+        LLVMGenerator.declare_i32(id);
+        LLVMGenerator.reg++;
+        LLVMGenerator.assign_i32(id, val.name);
+        id = LLVMGenerator.loadInt(id);
+        LLVMGenerator.exit_int_function(id);
+    }
+
+    @Override public void enterBlock(BaseLanParser.BlockContext ctx) { }
 }
