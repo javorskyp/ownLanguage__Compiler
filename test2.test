@@ -1,0 +1,70 @@
+# functions
+
+real chooseFirstNumber():
+    print("Welcome to a calculator chose your first number")
+    result = readReal()
+    return result
+end
+
+int chooseEquation():
+    print("Chose your equation")
+    print("1  add  2 subtract  3 multiply  4 divide")
+    choice = readInt()
+    return choice
+end
+
+real chooseSecondNumber():
+    print("Choose your second number")
+    result = readReal()
+    return result
+end
+
+real sum(real firstNum, real secondNum):
+    return firstNum + secondNum
+end
+
+real subtract(real firstNum, real secondNum):
+    return firstNum - secondNum
+end
+
+real multiply(real firstNum, real secondNum):
+    return firstNum * secondNum
+end
+
+real divide(real firstNum, real secondNum):
+    result = 1.0
+    if secondNum == 0.0:
+        print("Cant divide by 0")
+    else:
+        result = firstNum / secondNum
+    endif
+    return result
+end
+
+real calculate(real firstNum, real secondNum, int equation):
+    x = 1.0
+    if equation == 1:
+        x = sum(firstNum, secondNum)
+    elsif equation == 2:
+        x = subtract(firstNum, secondNum)
+    elsif equation == 3:
+        x = multiply(firstNum, secondNum)
+    elsif equation == 4:
+        x = divide(firstNum, secondNum)
+    else:
+        print("Wrong action")
+    endif
+    return x
+end
+
+real calculator():
+    firstNum = chooseFirstNumber()
+    equation = chooseEquation()
+    secondNum = chooseSecondNumber()
+    z = calculate(firstNum, secondNum, equation)
+    return z
+end
+
+out = calculator()
+print("result")
+print(out)

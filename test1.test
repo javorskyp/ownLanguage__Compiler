@@ -1,0 +1,31 @@
+int array():
+    print(" ")
+    print("Array test")
+    print(" ")
+    arr = {1,2,3,4,5}
+
+    print(arr[1])
+    arr[1] = arr[4]
+    print(arr[1])
+
+    print(" ")
+    print(arr[2])
+    arr[2] = arr[1]*4
+    print(arr[2])
+
+    arrX = {1.0, 2.0, 3.0}
+
+    print(" ")
+    print(arrX[1])
+    arrX[1] = 1.5
+    print(arrX[1])
+
+    print(" ")
+    print(arrX[2])
+    arrX[2] = arrX[1]*(real)arr[1]
+    print(arrX[2])
+    return 1
+end
+
+array()
+

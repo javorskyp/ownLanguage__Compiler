@@ -240,32 +240,32 @@ class LLVMGenerator{
    }
 
    static void req(Value val1, Value val2){
-      update_text( "%"+reg+" = fcmp eq double "+val1.name+", "+val2.name+"\n");
+      update_text( "%"+reg+" = fcmp oeq double "+val1.name+", "+val2.name+"\n");
       reg++;
    }
 
    static void rleq(Value val1, Value val2){
-      update_text( "%"+reg+" = fcmp sle double "+val1.name+", "+val2.name+"\n");
+      update_text( "%"+reg+" = fcmp ole double "+val1.name+", "+val2.name+"\n");
       reg++;
    }
 
    static void rgeq(Value val1, Value val2){
-      update_text( "%"+reg+" = fcmp sge double "+val1.name+", "+val2.name+"\n");
+      update_text( "%"+reg+" = fcmp oge double "+val1.name+", "+val2.name+"\n");
       reg++;
    }
 
    static void rneq(Value val1, Value val2){
-      update_text( "%"+reg+" = fcmp ne double "+val1.name+", "+val2.name+"\n");
+      update_text( "%"+reg+" = fcmp one double "+val1.name+", "+val2.name+"\n");
       reg++;
    }
 
    static void rle(Value val1, Value val2){
-      update_text( "%"+reg+" = fcmp slt double "+val1.name+", "+val2.name+"\n");
+      update_text( "%"+reg+" = fcmp olt double "+val1.name+", "+val2.name+"\n");
       reg++;
    }
 
    static void rge(Value val1, Value val2){
-      update_text( "%"+reg+" = fcmp sgt double "+val1.name+", "+val2.name+"\n");
+      update_text( "%"+reg+" = fcmp ogt double "+val1.name+", "+val2.name+"\n");
       reg++;
    }
 
@@ -318,7 +318,7 @@ class LLVMGenerator{
       ++end_counter;
    }
 
-   static void startRepeat(int repeatCount) {
+   static void startRepeat(int repeatCountId) {
       String counter = Integer.toString(reg);
       declare_i32(counter);
       ++reg;
@@ -331,7 +331,7 @@ class LLVMGenerator{
       sum_i32(newId, "1");
       assign_i32(counter, "%"+(reg-1));
 
-      update_text("%"+reg+" = icmp slt i32 %"+(reg-2)+", "+repeatCount+"\n");
+      update_text("%"+reg+" = icmp slt i32 %"+(reg-2)+", "+repeatCountId+"\n");
       reg++;
 
       update_text("br i1 %"+(reg-1)+", label %true"+br+", label %false"+br+"\n");

@@ -201,14 +201,14 @@ public class LLVMActions extends BaseLanBaseListener {
         if(global && globalVariables.containsKey(ID) || !global && localVariables.containsKey(ID)) {
             error(ctx.getStart().getLine(), "cant re-declare an array");
         }
-        String prefix = global? "@" : "%";
+
         List<String> els = ctx.REAL().stream().map(TerminalNode::getText).collect(Collectors.toList());
         int length = els.size()+1;
-        LLVMGenerator.declare_double_array(prefix+ID, length);
+        LLVMGenerator.declare_double_array(ID, length);
 
         int index = 0;
         for(String el : els) {
-            LLVMGenerator.assign_arr_el_double(prefix+ID, el, String.valueOf(index), length);
+            LLVMGenerator.assign_arr_el_double(ID, el, String.valueOf(index), length);
             ++index;
         }
         if(global){
@@ -515,6 +515,7 @@ public class LLVMActions extends BaseLanBaseListener {
         global = true;
         LLVMGenerator.reg = LLVMGenerator.global_reg;
         LLVMGenerator.global = true;
+        localVariables.clear();
     }
 
     @Override public void enterRealFunction(BaseLanParser.RealFunctionContext ctx) {
